@@ -1,18 +1,18 @@
 .PHONY: all clean test
-APP:=db-test
+APP:=sample
 SRC_DIR:=.
-SRCS:=db-utils.c
-TESTS:=main.c
+SRCS:=ics-core.c
+TESTS:=sample.c
 
-CFLAGS:=-I$(SRC_DIR)/include -I../out/include
-LIBS:=-Lout/lib -lsqlite3
+CFLAGS:=-I$(SRC_DIR)/include $(shell pkg-config --cflags libpjproject)
+LIBS:=$(shell pkg-config --libs libpjproject)
 
 all: $(APP)
 
 $(APP): $(SRCS:.c=.o) $(TESTS:.c=.o)
-	gcc -o $@ $^ $(LIBS)
+	gcc -o $@ $^ $(LIBS) 
 $(TESTS:.c=.o): %.o: $(SRC_DIR)/test/%.c
-	gcc -c -o $@ $< $(CFLAGS)
+	gcc -c -o $@ $< $(CFLAGS) 
 $(SRCS:.c=.o): %.o: $(SRC_DIR)/src/%.c
 	gcc -c -o $@ $< $(CFLAGS)
 clean:
