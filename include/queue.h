@@ -35,20 +35,9 @@ typedef struct {
 	pj_mutex_t *p_mutex;
 } opool_t;
 
-/* QUEUE EVENT POOL */
-typedef struct {
-	queue_event_t *p_queue_events;
-	char *__p_qe_data;
-	int capacity;
-	int data_size;
-	int count;
-	pj_mutex_t *p_mutex;
-} qepool_t;
-
 typedef struct __queue queue_t;
 struct __queue
 {
-	qepool_t qepool;
 	opool_t opool;	
 
 	void **buffer;
@@ -65,10 +54,6 @@ void queue_enqueue(queue_t *queue, void *value);
 void *queue_dequeue(queue_t *queue);
 int queue_size(queue_t *queue);
 void queue_init(queue_t *queue, int cap, int data_size, pj_pool_t *p_mempool);
-
-void qepool_init(qepool_t *p_qepool, int capacity, int data_size, pj_pool_t *p_mempool);
-queue_event_t *qepool_get(qepool_t *p_qepool);
-void qepool_free(qepool_t *p_qepool, queue_event_t *p_event);
 
 void opool_init(opool_t *p_opool, int capacity, int data_size, pj_pool_t *p_mempool);
 opool_item_t *opool_get(opool_t *p_opool);

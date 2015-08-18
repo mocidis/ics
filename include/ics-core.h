@@ -1,8 +1,11 @@
+#include <queue.h>
+
 typedef struct _app_data {
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pjsua_acc_config acfg;
 	
+	queue_t queue;
 	pjsua_acc_id acc_id;
 
 	pj_caching_pool cp;

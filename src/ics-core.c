@@ -1,10 +1,14 @@
 #include <pjsua-lib/pjsua.h>
 #include "ics-core.h"
 #include "ics-common.h"
+#include "queue.h"
+
+pjsua_call_id current_call = PJSUA_INVALID_ID;
 
 void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
 	pj_status_t status;
 	PJ_LOG(2, (__FILE__,"Reg started acc_id = %d",acc_id));
+	
 }
 
 void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
@@ -21,6 +25,17 @@ void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 	}	
 	else;
 		//STARTED
+}
+
+void find_call(void) {
+	int i, max;
+	
+	max = pjsua_call_get_max_count();
+	for (i = 0; i < max; i++) {
+		if (pjsua_call_is_active(i)) {
+			current_call = i;
+		}
+	}
 }
 
 void ics_core_create(ics_data_t *data) {
@@ -47,6 +62,8 @@ void ics_core_init(ics_data_t *data) {
 
 	pj_caching_pool_init(&data->cp, NULL, 1024);
 	data->pool = pj_pool_create(&data->cp.factory, "pool", 64, 64, NULL);
+
+	queue_init(&data->queue, 100,10, data->pool);
 }
 
 void ics_core_connect(ics_data_t *data) {
@@ -82,6 +99,38 @@ void ics_core_register(ics_data_t *data,char *s_ip, char *username, char*passwor
 	status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
 	ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
 	
+}
+
+void ics_core_make_call(ics_data_t *data) {
+	int chose;
+	char sip_add[50];
+	pj_str_t uri;
+	
+	printf("Chose a call:\n");
+	printf("1.quy2@192.168.235.129\n");
+	printf("2.quy3@192.168.235.129\n");
+	printf("3.quy10@192.168.235.129\n");
+
+	switch(chose) {
+		case 1:
+			strcpy(sip_add, "quy2@192.168.235.129");
+			break;
+		case 2:
+			strcpy(sip_add, "quy3@192.168.235.129");
+			break;	
+		case 3:
+			strcpy(sip_add, "quy10@192.168.235.129");
+			break;
+		default:
+			printf("Chose again");
+			break;
+	}
+	uri = pj_str(sip_add);
+	pjsua_call_make_call(data->acc_id, &uri, 0, NULL, NULL, NULL);
+}
+
+void ics_core_answer_call(ics_data_t *data) {
+	pjsua_call_answer(current_call, 200, NULL, NULL);
 }
 
 void ics_core_clean(ics_data_t *data) {
