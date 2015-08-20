@@ -14,6 +14,7 @@ typedef struct _app_data {
 	opool_t opool;
 	pj_pool_t *pool;
 	pj_thread_t *thread;
+	pj_thread_t *thread2;
 
 }ics_data_t;
 

@@ -5,7 +5,38 @@
 #include "ics-common.h"
 #include "queue.h"
 
-pjsua_call_id current_acc = PJSUA_INVALID_ID;
+pjsua_call_id current_call = PJSUA_INVALID_ID;
+
+pj_bool_t find_call(void) {
+	int i, max;
+	
+	max = pjsua_call_get_max_count();
+	for (i = 0; i < max; i++) {
+		if (pjsua_call_is_active(i)) {
+			current_call = i;
+			return PJ_TRUE;
+		}
+	}
+	current_call = PJSUA_INVALID_ID;
+	return PJ_FALSE;
+}
+
+void list_active_call(void) {
+	int i, max;
+	pjsua_call_info ci;
+
+	max = pjsua_call_get_count();
+
+	for (i = 0; i < max; i++){	
+		if (pjsua_call_is_active(i)) {
+			pjsua_call_get_info(i, &ci);
+			printf("Call id : %d to %.*s [%.*s]\n", ci.id,
+					(int)ci.remote_info.slen, ci.remote_info.ptr,
+					(int)ci.state_text.slen, ci.state_text.ptr);
+		}
+	}
+	printf("Your current call id : %d\n", current_call);
+}
 
 void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
 	ics_data_t *data;
@@ -35,9 +66,9 @@ void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
 	ics_data_t *data;
 	pjsua_call_info ci;
-
-	current_acc = call_id;
-
+	
+	current_call = call_id;
+	
 	pjsua_call_get_info(call_id, &ci);
 	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
@@ -46,15 +77,37 @@ void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data 
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void find_call(void) {
-	int i, max;
+void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
+	pjsua_call_info ci;
+
+	PJ_UNUSED_ARG(e);
 	
-	max = pjsua_call_get_max_count();
-	for (i = 0; i < max; i++) {
-		if (pjsua_call_is_active(i)) {
-			current_acc = i;
-		}
+	pjsua_call_get_info(call_id, &ci);
+	current_call = call_id;
+	
+	if (strcmp(ci.state_text.ptr,"DISCONNCTD") == 0){
+		find_call();
 	}
+	printf("Call %d state=%.*s\n", call_id,(int)ci.state_text.slen, ci.state_text.ptr);
+}
+
+void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t *st_text, pj_bool_t final, pj_bool_t *p_cont) {
+	ics_data_t *data;
+	pjsua_call_info ci;
+	current_call = call_id;
+	int len;
+
+	pjsua_call_get_info(call_id, &ci);
+	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);
+	
+	len = (int)st_text->slen;
+	if (st_text->ptr[len] == '\n' || st_text->ptr[len] == '\r')
+		st_text->ptr[len] = '\0';
+
+	opool_item_t *p_item = opool_get(&data->opool);
+	build_transfer_event((ics_event_t *)p_item->data,call_id, st_code, st_text->ptr);	
+
+	queue_enqueue(&data->queue, (void *)p_item);
 }
 
 void ics_core_create(ics_data_t *data) {
@@ -70,6 +123,8 @@ void ics_core_config_default(ics_data_t *data) {
 	data->cfg.cb.on_reg_started = &on_reg_started;
 	data->cfg.cb.on_reg_state2 = &on_reg_state;
 	data->cfg.cb.on_incoming_call = &on_incoming_call;
+	data->cfg.cb.on_call_state = &on_call_state;
+	data->cfg.cb.on_call_transfer_status = &on_call_transfer_status;
 
 	pjsua_logging_config_default(&data->log_cfg);
 	data->log_cfg.console_level = 2;
@@ -110,8 +165,6 @@ void ics_core_register(ics_data_t *data,char *s_ip, char *username, char*passwor
 	sprintf(s, "sip:%s@%s", username, s_ip);
 	sprintf(s1, "sip:%s",s_ip);
 
-	current_acc = data->acc_id;
-
 	data->acfg.id = pj_str(s);
 	data->acfg.reg_uri = pj_str(s1);
 	data->acfg.cred_count = 1;
@@ -134,22 +187,21 @@ void ics_core_make_call(ics_data_t *data) {
 	pj_str_t uri;
 	
 	printf("Chose a call:\n");
-	printf("1.quy2@192.168.235.129\n");
-	printf("2.quy3@192.168.235.129\n");
-	printf("3.quy10@192.168.235.129\n");
-	printf("Current acc = %d\n", data->acc_id);
+	printf("1.quy2@192.168.2.50\n");
+	printf("2.quy3@192.168.2.50\n");
+	printf("3.quy10@192.168.2.50\n");
 	if (scanf("%d",&chose) != 1){
 		printf("Invalid input value\n");
 	}
 	switch(chose) {
 		case 1:
-			strcpy(sip_add, "sip:quy2@192.168.235.129");
+			strcpy(sip_add, "sip:quy2@192.168.2.50");
 			break;
 		case 2:
-			strcpy(sip_add, "sip:quy3@192.168.235.129");
+			strcpy(sip_add, "sip:quy3@192.168.2.50");
 			break;	
 		case 3:
-			strcpy(sip_add, "sip:quy10@192.168.235.129");
+			strcpy(sip_add, "sip:quy10@192.168.2.50");
 			break;
 		default:
 			printf("Chose again\n");
@@ -160,10 +212,18 @@ void ics_core_make_call(ics_data_t *data) {
 }
 
 void ics_core_answer_call(ics_data_t *data) {
-	pjsua_call_answer(current_acc, 200, NULL, NULL);
+	pjsua_call_answer(data->acc_id, 200, NULL, NULL);
 }
 
-void ics_core_hangup_call(ics_data_t *data) {
+void ics_core_hangup_call(ics_data_t *data, int renew) {
+	if (current_call == PJSUA_INVALID_ID)
+		printf("No current call\n");
+	else {
+		if (renew) 
+			pjsua_call_hangup_all();
+		else
+			pjsua_call_hangup(current_call, 0, NULL, NULL);	
+	}
 }
 
 void ics_core_hold_call(ics_data_t *data) {
@@ -177,6 +237,20 @@ void ics_core_set_register(ics_data_t *data) {
 }
 
 void ics_core_tranfer_call(ics_data_t *data) {
+	list_active_call();
+	int i, max;
+	pjsua_call_info ci;
+
+	max = pjsua_call_get_count();
+	printf("You have %d active call%s\n", max, (max>1?"s":""));
+
+	for (i = 0; i < max; i++){	
+		if (pjsua_call_is_active(i)) {
+			pjsua_call_get_info(i, &ci);
+			pjsua_call_xfer_replaces(current_call, ci.id, 0, NULL);
+			break;
+		}
+	}
 }
 
 void print_menu() {
@@ -189,6 +263,7 @@ void print_menu() {
 	puts("|  H  Hold call                |");
 	puts("|  r  release hold             |");
 	puts("|  t  Tranfer call             |");
+	puts("|  l  List active call         |");
 	puts("|  u  Un-register              |");
 	puts("|  r  Re-register              |");
 	puts("+==============================+");

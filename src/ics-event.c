@@ -10,14 +10,14 @@
 char *ICS_EVENT_NAME[] = {
 	"ICS_REG_START",
 	"ICS_REG_STATE",
-	"ICS_INCOMING_CALL"
+	"ICS_INCOMING_CALL",
+	"ICS_TRANSFER"
 };
 
 void build_reg_start_event(ics_event_t *event, int account_id) {
 	event->reg_start_event.eventid = ICS_REG_START;
 	event->event.eventid = ICS_REG_START;	
 	event->reg_start_event.account_id = account_id;
-	printf("event id = %d\n", event->event.eventid);
 }
 void build_reg_state_event(ics_event_t *event, int account_id, int is_registration, int code, char *reason, int reason_len) {
 	event->reg_state_event.eventid = ICS_REG_STATE;
@@ -50,6 +50,19 @@ void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, 
 	//event->incoming_call_event.local_contact[local_len] = '\0';
 }
 
+void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text) {
+	int len = sizeof(event->transfer_event.st_text);
+
+	event->transfer_event.eventid = ICS_TRANSFER;
+	event->event.eventid = ICS_TRANSFER;
+	event->transfer_event.call_id = call_id;
+	event->transfer_event.st_code = st_code;
+
+	ICS_EXIT_IF_TRUE(sizeof(st_text) < 0, "Invalid value st_text");
+	ICS_EXIT_IF_TRUE(sizeof(st_text) > len, "Overflow in ics_transfer_event.st_text");
+	strncpy(event->transfer_event.st_text, st_text, len);
+}
+
 
 int is_reg_start_event(ics_event_t *event) {
 	return event->event.eventid == ICS_REG_START;
@@ -59,6 +72,9 @@ int is_reg_state_event(ics_event_t *event) {
 }
 int is_incoming_call_event(ics_event_t *event) {
 	return event->event.eventid == ICS_INCOMING_CALL;
+}
+int is_transfer_event(ics_event_t *event) {
+	return event->event.eventid == ICS_TRANSFER;
 }
 
 void print_event(ics_event_t *event) {
@@ -70,7 +86,7 @@ void print_event(ics_event_t *event) {
 	}
 	else if (is_reg_state_event(event)) {
 		printf("Acc id: %d\n", event->reg_state_event.account_id);
-		printf("Registed: %d \n", event->reg_state_event.is_registration);
+		printf("Registed: %s \n", (event->reg_state_event.is_registration>0 ? "Yes" : "No"));
 		printf("Status: %d(%s)\n", event->reg_state_event.code, event->reg_state_event.reason);
 	}
 	else if (is_incoming_call_event(event)) {
@@ -78,6 +94,10 @@ void print_event(ics_event_t *event) {
 		printf("Call id: %d\n", event->incoming_call_event.call_id);
 		printf("From: %s\n", event->incoming_call_event.remote_contact);	
 		printf("To: %s\n",event->incoming_call_event.local_contact);
+	}
+	else if (is_transfer_event(event)) {
+		printf("Call id: %d\n", event->transfer_event.call_id);
+		printf("Status: %d(%s)\n", event->transfer_event.st_code, event->transfer_event.st_text);
 	}
 }
 
