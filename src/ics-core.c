@@ -7,11 +7,49 @@
 
 pjsua_call_id current_call = PJSUA_INVALID_ID;
 
+void (*on_reg_start_p)(int account_id);
+void (*on_reg_state_p)(int account_id, char *is_registration,int code, char *reason);
+void (*on_incoming_call_p)(int account_id, int call_id, char *remote_contact, char *local_contact);
+void (*on_call_state_p)(int call_id, char *st_text);
+void (*on_call_transfer_p)(int call_id, int st_code, char *st_text);
+
+void process_event(ics_event_t *event) {
+	ICS_EXIT_IF_TRUE(event->event.eventid >= ICS_EVENT_END, "Unknown event id\n");
+
+	printf("Event type: %s\n", ICS_EVENT_NAME[event->event.eventid]);
+	if( is_reg_start_event(event) ) {
+		on_reg_start_p(event->reg_start_event.account_id);
+	}
+	else if (is_reg_state_event(event)) {
+		on_reg_state_p(event->reg_state_event.account_id, 
+				(event->reg_state_event.is_registration>0 ? "Yes" : "No"), 
+				event->reg_state_event.code, 
+				event->reg_state_event.reason);
+	}
+	else if (is_incoming_call_event(event)) {
+		on_incoming_call_p(event->incoming_call_event.account_id, event->incoming_call_event.call_id,
+				event->incoming_call_event.remote_contact,
+				event->incoming_call_event.local_contact);
+	}
+	else if (is_call_state_event(event)) {
+		on_call_state_p(event->call_state_event.call_id, event->call_state_event.state);
+	}
+	else if (is_transfer_event(event)) {
+		on_call_transfer_p(event->transfer_event.call_id,
+				event->transfer_event.st_code,
+				event->transfer_event.st_text);
+	}
+	else if (is_call_media_state_event(event)) {
+		printf("Call id: %d\n", event->call_media_state_event.call_id);
+		printf("Status: %d\n", event->call_media_state_event.st_code);
+	}
+}
+
 pj_bool_t find_call(void) {
 	int i, max;
-	
+
 	max = pjsua_call_get_max_count();
-	for (i = 0; i < max; i++) {
+	for (i = max-1; i >= 0; --i) {
 		if (pjsua_call_is_active(i)) {
 			current_call = i;
 			return PJ_TRUE;
@@ -44,51 +82,89 @@ void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
 
 	opool_item_t *p_item = opool_get(&data->opool);
 
+	ics_event_t *event = (ics_event_t *)p_item->data;
+
 	build_reg_start_event((ics_event_t *)p_item->data, acc_id);
-	queue_enqueue(&data->queue, (void *)p_item);
+	//queue_enqueue(&data->queue, (void *)p_item);
+	process_event(event);
+
 }
 
 void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 
 	//PJ_LOG(2, (__FILE__, "Current Account %d Status: %d(%.*s)",
 	//			acc_id,	info->cbparam->code, info->cbparam->reason.slen, info->cbparam->reason.ptr));
-	
+
 	ics_data_t *data;
-	
+
 	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
+	ics_event_t *event = (ics_event_t *)p_item->data;
 
 	build_reg_state_event((ics_event_t *)p_item->data, acc_id,info->cbparam->expiration, info->cbparam->code, 
-				info->cbparam->reason.ptr, info->cbparam->reason.slen);
-	queue_enqueue(&data->queue, (void *)p_item);
+			info->cbparam->reason.ptr, info->cbparam->reason.slen);
+	//queue_enqueue(&data->queue, (void *)p_item);
+	process_event(event);
 }
 
 void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
 	ics_data_t *data;
 	pjsua_call_info ci;
-	
+
 	current_call = call_id;
-	
+
 	pjsua_call_get_info(call_id, &ci);
 	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
 	build_incoming_call_event((ics_event_t *)p_item->data, acc_id,call_id, ci.remote_info.ptr, ci.local_info.ptr);	
+	ics_event_t *event = (ics_event_t *)p_item->data;
 
-	queue_enqueue(&data->queue, (void *)p_item);
+	//queue_enqueue(&data->queue, (void *)p_item);
+	process_event(event);
 }
 
 void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
+	ics_data_t *data;
 	pjsua_call_info ci;
 
 	PJ_UNUSED_ARG(e);
-	
+
 	pjsua_call_get_info(call_id, &ci);
 	current_call = call_id;
-	
+
 	if (strcmp(ci.state_text.ptr,"DISCONNCTD") == 0){
 		find_call();
 	}
-	printf("Call %d state=%.*s\n", call_id,(int)ci.state_text.slen, ci.state_text.ptr);
+
+	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);
+	opool_item_t *p_item = opool_get(&data->opool);
+	build_call_state_event((ics_event_t *)p_item->data, call_id, ci.state_text.ptr);	
+	ics_event_t *event = (ics_event_t *)p_item->data;
+
+	//	queue_enqueue(&data->queue, (void *)p_item);
+	process_event(event);
+
+}
+
+void on_call_media_state(pjsua_call_id call_id) {
+	ics_data_t *data;
+	pjsua_call_info ci;
+
+	pjsua_call_get_info(call_id, &ci);
+
+	if (ci.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
+		pjsua_conf_connect(ci.conf_slot, 0);
+		pjsua_conf_connect(0, ci.conf_slot);
+	}
+	pjsua_call_get_info(call_id, &ci);
+	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);
+	opool_item_t *p_item = opool_get(&data->opool);
+	build_call_media_state_event((ics_event_t *)p_item->data, call_id, ci.media_status);	
+	ics_event_t *event = (ics_event_t *)p_item->data;
+
+	//	queue_enqueue(&data->queue, (void *)p_item);
+	process_event(event);
+
 }
 
 void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t *st_text, pj_bool_t final, pj_bool_t *p_cont) {
@@ -99,15 +175,18 @@ void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t
 
 	pjsua_call_get_info(call_id, &ci);
 	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);
-	
+
 	len = (int)st_text->slen;
 	if (st_text->ptr[len] == '\n' || st_text->ptr[len] == '\r')
 		st_text->ptr[len] = '\0';
 
 	opool_item_t *p_item = opool_get(&data->opool);
 	build_transfer_event((ics_event_t *)p_item->data,call_id, st_code, st_text->ptr);	
+	ics_event_t *event = (ics_event_t *)p_item->data;
 
-	queue_enqueue(&data->queue, (void *)p_item);
+	//	queue_enqueue(&data->queue, (void *)p_item);
+	process_event(event);
+
 }
 
 void ics_core_create(ics_data_t *data) {
@@ -124,10 +203,31 @@ void ics_core_config_default(ics_data_t *data) {
 	data->cfg.cb.on_reg_state2 = &on_reg_state;
 	data->cfg.cb.on_incoming_call = &on_incoming_call;
 	data->cfg.cb.on_call_state = &on_call_state;
+	data->cfg.cb.on_call_media_state = &on_call_media_state;
 	data->cfg.cb.on_call_transfer_status = &on_call_transfer_status;
 
 	pjsua_logging_config_default(&data->log_cfg);
 	data->log_cfg.console_level = 2;
+}
+
+void ics_core_set_reg_start_callback(void (*func)(int accid)) {
+	on_reg_start_p = func;
+}
+
+void ics_core_set_reg_state_callback(void (*func)(int account_id, char* is_registration, int code, char *reason)) {
+	on_reg_state_p = func;
+}
+
+void ics_core_set_incoming_call_callback(void (*func)(int account_id, int call_id, char *remote_contact, char *local_contact)) {
+	on_incoming_call_p = func;
+}
+
+void ics_core_set_call_state_callback(void (*func)(int call_id, char *st_text)) {
+	on_call_state_p = func;
+}
+
+void ics_core_set_call_transfer_callback(void (*func)(int call_id, int st_code, char *st_text)) {
+	on_call_transfer_p = func;
 }
 
 void ics_core_init(ics_data_t *data) {
@@ -141,12 +241,15 @@ void ics_core_init(ics_data_t *data) {
 	queue_init(&data->queue, queue_capacity, 10 /* NOT USED */, data->pool);
 
 	opool_init(&data->opool, queue_capacity, sizeof(ics_event_t), data->pool );
+	//	status = pjmedia_aud_subsys_init(&data->cp.factory);
+
+	pjsua_set_null_snd_dev();
 }
 
 void ics_core_connect(ics_data_t *data) {
 	pj_status_t status;
 	pjsua_transport_config cfg;
-	
+
 	pjsua_transport_config_default(&cfg);
 	cfg.port = 12345;
 	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
@@ -160,7 +263,7 @@ void ics_core_register(ics_data_t *data,char *s_ip, char *username, char*passwor
 
 	pj_status_t status;
 	pjsua_acc_config_default(&data->acfg);	
-	
+
 	char s[50],s1[50];
 	sprintf(s, "sip:%s@%s", username, s_ip);
 	sprintf(s1, "sip:%s",s_ip);
@@ -175,44 +278,24 @@ void ics_core_register(ics_data_t *data,char *s_ip, char *username, char*passwor
 	data->acfg.cred_info[0].data = pj_str(password);
 
 	data->acfg.user_data = (void *)data;
-	
-	pjsua_set_no_snd_dev();
+
 	status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
 	ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
 }
 
-void ics_core_make_call(ics_data_t *data) {
-	int chose;
-	char sip_add[50];
+void ics_core_make_call(ics_data_t *data, char * sip_addr) {
 	pj_str_t uri;
-	
-	printf("Chose a call:\n");
-	printf("1.quy2@192.168.2.50\n");
-	printf("2.quy3@192.168.2.50\n");
-	printf("3.quy10@192.168.2.50\n");
-	if (scanf("%d",&chose) != 1){
-		printf("Invalid input value\n");
-	}
-	switch(chose) {
-		case 1:
-			strcpy(sip_add, "sip:quy2@192.168.2.50");
-			break;
-		case 2:
-			strcpy(sip_add, "sip:quy3@192.168.2.50");
-			break;	
-		case 3:
-			strcpy(sip_add, "sip:quy10@192.168.2.50");
-			break;
-		default:
-			printf("Chose again\n");
-			break;
-	}
-	uri = pj_str(sip_add);
+
+	uri = pj_str(sip_addr);
 	pjsua_call_make_call(data->acc_id, &uri, 0, NULL, NULL, NULL);
 }
 
 void ics_core_answer_call(ics_data_t *data) {
-	pjsua_call_answer(data->acc_id, 200, NULL, NULL);
+	if (current_call == PJSUA_INVALID_ID)
+		printf("No current call\n");
+	else {
+		pjsua_call_answer(current_call, 200, NULL, NULL);
+	}
 }
 
 void ics_core_hangup_call(ics_data_t *data, int renew) {
@@ -227,16 +310,34 @@ void ics_core_hangup_call(ics_data_t *data, int renew) {
 }
 
 void ics_core_hold_call(ics_data_t *data) {
-	
+	if (current_call < 0)
+		printf("No current call\n");
+	else {
+		pjsua_call_set_hold(current_call, NULL);
+	}
 }
-
 void ics_core_release_hold(ics_data_t *data) {
+	if (current_call < 0)
+		printf("No current call\n");
+	else {
+		pjsua_call_reinvite(current_call, PJ_TRUE, NULL);
+	}
 }
 
-void ics_core_set_register(ics_data_t *data) {
+void ics_core_set_register(ics_data_t *data, int renew) {
+	if (renew == 1 || renew == 0)
+		pjsua_acc_set_registration(data->acc_id, renew);
+	else
+		printf("Invalid input");
 }
 
-void ics_core_tranfer_call(ics_data_t *data) {
+void ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
+	char cmd_type[10] = "transfer";
+	opool_item_t *p_item = opool_get(&data->opool);
+	queue_enqueue(&data->queue, (void *)&cmd_type);
+}
+
+void _ics_core_transfer_call(ics_data_t *data) {
 	list_active_call();
 	int i, max;
 	pjsua_call_info ci;
@@ -253,30 +354,17 @@ void ics_core_tranfer_call(ics_data_t *data) {
 	}
 }
 
-void print_menu() {
-	puts("+==============================+");
-	puts("|       Call Commands:         |");
-	puts("|                              |");
-	puts("|  m  Make new call            |");
-	puts("|  a  Answer call              |");
-	puts("|  h  Hangup call  (ha=all)    |");
-	puts("|  H  Hold call                |");
-	puts("|  r  release hold             |");
-	puts("|  t  Tranfer call             |");
-	puts("|  l  List active call         |");
-	puts("|  u  Un-register              |");
-	puts("|  r  Re-register              |");
-	puts("+==============================+");
-}
-
 static void *thread_proc(void *param) {
 	ics_data_t *data = (ics_data_t *) param;	
 	while(1) {
 
 		opool_item_t *p_item = opool_get(&data->opool);
 		p_item = (opool_item_t *)queue_dequeue(&data->queue);
-		ics_event_t *event = (ics_event_t *)p_item->data;
-		print_event(event);
+
+		if (strcmp(p_item->data,"transfer"))
+			_ics_core_transfer_call(data);
+
+		// Event processing done
 		opool_free(&data->opool, p_item);
 	}
 }

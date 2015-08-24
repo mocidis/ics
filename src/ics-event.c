@@ -11,7 +11,9 @@ char *ICS_EVENT_NAME[] = {
 	"ICS_REG_START",
 	"ICS_REG_STATE",
 	"ICS_INCOMING_CALL",
-	"ICS_TRANSFER"
+	"ICS_CALL_STATE",
+	"ICS_TRANSFER",
+	"ICS_CALL_MEDIA_STATE"
 };
 
 void build_reg_start_event(ics_event_t *event, int account_id) {
@@ -49,6 +51,17 @@ void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, 
 	//event->incoming_call_event.remote_contact[remote_len] = '\0';
 	//event->incoming_call_event.local_contact[local_len] = '\0';
 }
+void build_call_state_event(ics_event_t *event, int call_id, char *state) {
+	int state_len = sizeof(event->call_state_event.state);
+	
+	event->call_state_event.eventid = ICS_CALL_STATE;
+	event->event.eventid = ICS_CALL_STATE;	
+	event->call_state_event.call_id = call_id;
+
+	ICS_EXIT_IF_TRUE(sizeof(state) < 0 , "invalid value reason_len");
+	ICS_EXIT_IF_TRUE(sizeof(state) > state_len, "Overflow in ics_call_state_event.state");
+	strncpy(event->call_state_event.state, state, state_len);
+}
 
 void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text) {
 	int len = sizeof(event->transfer_event.st_text);
@@ -63,6 +76,13 @@ void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st
 	strncpy(event->transfer_event.st_text, st_text, len);
 }
 
+void build_call_media_state_event(ics_event_t *event, int call_id, int st_code) {
+	event->call_media_state_event.eventid = ICS_CALL_MEDIA_STATE;
+	event->event.eventid = ICS_CALL_MEDIA_STATE;
+	event->call_media_state_event.call_id = call_id;
+	event->call_media_state_event.st_code = st_code;
+}
+
 
 int is_reg_start_event(ics_event_t *event) {
 	return event->event.eventid == ICS_REG_START;
@@ -73,31 +93,14 @@ int is_reg_state_event(ics_event_t *event) {
 int is_incoming_call_event(ics_event_t *event) {
 	return event->event.eventid == ICS_INCOMING_CALL;
 }
+int is_call_state_event(ics_event_t *event) {
+	return event->event.eventid == ICS_CALL_STATE;
+}
 int is_transfer_event(ics_event_t *event) {
 	return event->event.eventid == ICS_TRANSFER;
 }
-
-void print_event(ics_event_t *event) {
-	ICS_EXIT_IF_TRUE(event->event.eventid >= ICS_EVENT_END, "Unknown event id\n");
-	printf("<=================================================>\n");
-	printf("Event type: %s\n", ICS_EVENT_NAME[event->event.eventid]);
-	if( is_reg_start_event(event) ) {
-		printf("Acc id: %d\n", event->reg_start_event.account_id); 
-	}
-	else if (is_reg_state_event(event)) {
-		printf("Acc id: %d\n", event->reg_state_event.account_id);
-		printf("Registed: %s \n", (event->reg_state_event.is_registration>0 ? "Yes" : "No"));
-		printf("Status: %d(%s)\n", event->reg_state_event.code, event->reg_state_event.reason);
-	}
-	else if (is_incoming_call_event(event)) {
-		printf("Acc id: %d\n", event->incoming_call_event.account_id);
-		printf("Call id: %d\n", event->incoming_call_event.call_id);
-		printf("From: %s\n", event->incoming_call_event.remote_contact);	
-		printf("To: %s\n",event->incoming_call_event.local_contact);
-	}
-	else if (is_transfer_event(event)) {
-		printf("Call id: %d\n", event->transfer_event.call_id);
-		printf("Status: %d(%s)\n", event->transfer_event.st_code, event->transfer_event.st_text);
-	}
+int is_call_media_state_event(ics_event_t *event) {
+	return event->event.eventid == ICS_CALL_MEDIA_STATE;
 }
+
 

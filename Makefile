@@ -1,6 +1,5 @@
 .PHONY: all clean test
 APP:=sample
-#LOG:=logger
 SRC_DIR:=.
 SRCS:=ics-core.c ics-event.c
 TESTS:=sample.c
@@ -10,7 +9,6 @@ Q_SRCS:=queue.c
 
 O_DIR:=../object-pool
 O_SRCS:=object-pool.c
-#LOGS:=logger.c
 
 CFLAGS:= -I$(SRC_DIR)/include -I$(Q_DIR)/include -I$(O_DIR)/include $(shell pkg-config --cflags libpjproject)
 LIBS:=$(shell pkg-config --libs libpjproject)
@@ -18,20 +16,13 @@ LIBS:=$(shell pkg-config --libs libpjproject)
 all: $(APP) $(LOG)
 
 $(APP): $(SRCS:.c=.o) $(TESTS:.c=.o) $(Q_SRCS:.c=.o) $(O_SRCS:.c=.o)
-	gcc -o $@ $^ $(LIBS) 
-
-#$(LOG): $(LOGS:.c=.o)
-#	gcc -o $@ $^
+	gcc -o $@ $^ $(LIBS)
 
 $(TESTS:.c=.o): %.o: $(SRC_DIR)/test/%.c
-	gcc -c -o $@ $< $(CFLAGS) 
-
-#$(LOGS:.c=.o): %.o: $(SRC_DIR)/test/%.c
-#	gcc -o $@ -c $< $(CFLAGS)
+	gcc -c -o $@ $< $(CFLAGS)
 
 $(SRCS:.c=.o): %.o: $(SRC_DIR)/src/%.c
 	gcc -c -o $@ $< $(CFLAGS)
-
 $(O_SRCS:.c=.o): %.o: $(O_DIR)/src/%.c
 	gcc -c -o $@ $< $(CFLAGS)
 

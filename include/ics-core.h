@@ -29,3 +29,5 @@ void ics_core_end(ics_data_t *data);
 void ics_core_clean(ics_data_t *data);
 
 void ics_core_register(ics_data_t *data,char *s_ip, char *username, char*password); // for testing
+
+void ics_core_transfer_call_q(ics_data_t *data);
