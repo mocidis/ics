@@ -15,6 +15,7 @@ void (*on_call_state_p)(int call_id, char *st_text);
 void (*on_call_transfer_p)(int call_id, int st_code, char *st_text);
 void (*on_call_media_state_p)(int call_id, int st_code);
 
+
 void ics_core_set_reg_start_callback(void (*func)(int accid)) {
 	on_reg_start_p = func;
 }
@@ -143,17 +144,21 @@ void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
 	ics_data_t *data;
 	pjsua_call_info ci;
-
-	current_call = call_id;
+	
 
 	pjsua_call_get_info(call_id, &ci);
 	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
+
+	_ics_core_hold_call(data);
+
 	opool_item_t *p_item = opool_get(&data->opool);
 	build_incoming_call_event((ics_event_t *)p_item->data, acc_id,call_id, ci.remote_info.ptr, ci.local_info.ptr);	
 	ics_event_t *event = (ics_event_t *)p_item->data;
 
 	//queue_enqueue(&data->queue, (void *)p_item);
 	process_event(event);
+
+	current_call = call_id;
 }
 
 void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
@@ -163,6 +168,13 @@ void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 	PJ_UNUSED_ARG(e);
 
 	pjsua_call_get_info(call_id, &ci);
+
+//Handle hold call problem
+#if 0
+	if (current_call != PJSUA_INVALID_ID)
+		_ics_core_hold_call(data);
+#endif
+	
 	current_call = call_id;
 
 	if (strcmp(ci.state_text.ptr,"DISCONNCTD") == 0){
@@ -258,9 +270,6 @@ void ics_core_init(ics_data_t *data) {
 	pjsua_set_snd_dev(0,2);
 }
 
-
-
-
 void _ics_core_connect(ics_data_t *data, int port) {
 	pj_status_t status;
 	pjsua_transport_config cfg;
@@ -355,6 +364,7 @@ void _ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
 		printf("Cannot transfer call!\n");
 #endif
 
+//For test only:
 #if 1
 	int i, max;
 	pjsua_call_info ci;
@@ -390,6 +400,7 @@ void _ics_core_clean(ics_data_t *data) {
 	pj_caching_pool_destroy(&data->cp);
 }
 
+//Put command into queue
 void ics_core_connect(ics_data_t *data, int port){
 	opool_item_t *p_item = opool_get(&data->opool);
 
@@ -473,6 +484,8 @@ void ics_core_clean(ics_data_t *data) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
+
+//Dequeue and do command
 static void *thread_proc(void *param) {
 	ics_data_t *data = (ics_data_t *) param;	
 	while(data->f_quit) {

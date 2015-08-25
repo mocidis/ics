@@ -18,12 +18,10 @@ char *ICS_EVENT_NAME[] = {
 
 void build_reg_start_event(ics_event_t *event, int account_id) {
 	event->reg_start_event.eventid = ICS_REG_START;
-	event->event.eventid = ICS_REG_START;	
 	event->reg_start_event.account_id = account_id;
 }
 void build_reg_state_event(ics_event_t *event, int account_id, int is_registration, int code, char *reason, int reason_len) {
 	event->reg_state_event.eventid = ICS_REG_STATE;
-	event->event.eventid = ICS_REG_STATE;	
 	event->reg_state_event.account_id = account_id;
 	event->reg_state_event.is_registration = is_registration;
 	event->reg_state_event.code = code;
@@ -39,7 +37,6 @@ void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, 
 	int remote_len = sizeof(event->incoming_call_event.remote_contact);
 
 	event->incoming_call_event.eventid = ICS_INCOMING_CALL;
-	event->event.eventid = ICS_INCOMING_CALL;	
 	event->incoming_call_event.account_id = account_id;
 	event->incoming_call_event.call_id = call_id;
 
@@ -55,7 +52,6 @@ void build_call_state_event(ics_event_t *event, int call_id, char *state) {
 	int state_len = sizeof(event->call_state_event.state);
 	
 	event->call_state_event.eventid = ICS_CALL_STATE;
-	event->event.eventid = ICS_CALL_STATE;	
 	event->call_state_event.call_id = call_id;
 
 	ICS_EXIT_IF_TRUE(sizeof(state) < 0 , "invalid value reason_len");
@@ -67,7 +63,6 @@ void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st
 	int len = sizeof(event->transfer_event.st_text);
 
 	event->transfer_event.eventid = ICS_TRANSFER;
-	event->event.eventid = ICS_TRANSFER;
 	event->transfer_event.call_id = call_id;
 	event->transfer_event.st_code = st_code;
 
@@ -78,7 +73,6 @@ void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st
 
 void build_call_media_state_event(ics_event_t *event, int call_id, int st_code) {
 	event->call_media_state_event.eventid = ICS_CALL_MEDIA_STATE;
-	event->event.eventid = ICS_CALL_MEDIA_STATE;
 	event->call_media_state_event.call_id = call_id;
 	event->call_media_state_event.st_code = st_code;
 }
