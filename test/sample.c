@@ -29,6 +29,11 @@ void on_call_transfer_impl(int call_id, int st_code, char *st_text) {
 	printf("Status: %d(%s)\n", st_code, st_text);
 }
 
+void on_call_media_state_impl(int call_id, int st_code) {
+	printf("Call id: %d\n", call_id);
+	printf("Status: %d\n", st_code);
+}
+
 int main() {
 	ics_data_t app_data;
 	char option[10];
@@ -37,8 +42,6 @@ int main() {
 	int chose;
 	char sip_add[50];
 
-	ics_core_create(&app_data);
-	ics_core_config_default(&app_data);
 	ics_core_init(&app_data);
 
 	ics_core_set_reg_start_callback(&on_reg_start_impl);
@@ -46,11 +49,12 @@ int main() {
 	ics_core_set_incoming_call_callback(&on_incoming_call_impl);
 	ics_core_set_call_state_callback(&on_call_state_impl);
 	ics_core_set_call_transfer_callback(&on_call_transfer_impl);
+	ics_core_set_call_media_state_callback(&on_call_media_state_impl);
 
-	ics_core_connect(&app_data);
-	ics_core_register(&app_data, "192.168.2.50", "quy", "1234");
+	ics_core_connect(&app_data, 12345);
+	ics_core_add_account(&app_data, "192.168.2.50", "quy", "1234");
 
-	ics_core_start(&app_data);
+	ics_core_receive_command(&app_data);
 
 	is_running = 1;
 	while(is_running) {
@@ -101,22 +105,26 @@ int main() {
 				ics_core_release_hold(&app_data);
 				break;
 			case 't':
-				ics_core_transfer_call_q(&app_data);
+				if (option[1] == 'x') {
+					ics_core_adjust_audio_volume(&app_data, "t", atof(&option[3])); // Adjust mic level (Transmitter)
+				}
+				else
+					ics_core_transfer_call(&app_data, 1, 2);
 				break;
-			case 'l':
-				list_active_call();
 			case 'u':
 				ics_core_set_register(&app_data, 0);
 				break;
 			case 'r':
-				ics_core_set_register(&app_data, 1);
+				if (option[1] == 'x')
+					ics_core_adjust_audio_volume(&app_data, "r", atof(&option[3])); // Adjust speaker levela (Recevicer)
+				else
+					ics_core_set_register(&app_data, 1);
 				break;
 			case 'q':
-				ics_core_end(&app_data);
-				ics_core_clean(&app_data);
+				_ics_core_clean(&app_data);
 				is_running = 0;
 				break;
-			case 'p':
+			case 's':
 				print_menu();
 				break;
 			default:
@@ -128,18 +136,20 @@ int main() {
 }
 
 void print_menu() {
-	puts("+==============================+");
-	puts("|       Call Commands:         |");
-	puts("|                              |");
-	puts("|  m  Make new call            |");
-	puts("|  a  Answer call              |");
-	puts("|  h  Hangup call  (ha=all)    |");
-	puts("|  H  Hold call                |");
-	puts("|  R  release hold             |");
-	puts("|  t  Tranfer call             |");
-	puts("|  l  List active call         |");
-	puts("|  u  Un-register              |");
-	puts("|  r  Re-register              |");
-	puts("+==============================+");
+	puts("+============================+");
+	puts("|       Call Commands:       |");
+	puts("|                            |");
+	puts("|  m  :Make new call         |");
+	puts("|  a  :Answer call           |");
+	puts("|  h  :Hangup call  (ha=all) |");
+	puts("|  H  :Hold call             |");
+	puts("|  R  :Release hold          |");
+	puts("|  t  :Tranfer call          |");
+	puts("|  u  :Un-register           |");
+	puts("|  r  :Re-register           |");
+	puts("|----------------------------|");
+	puts("|  tx level :Adjust mic      |");
+	puts("|  rx level :Adjust speaker  |");
+	puts("+============================+");
 }
 

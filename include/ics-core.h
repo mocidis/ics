@@ -18,16 +18,28 @@ typedef struct _app_data {
 
 }ics_data_t;
 
-void ics_core_create(ics_data_t *data);
-void ics_core_config_default(ics_data_t *data);
 void ics_core_init(ics_data_t *data);
-void ics_core_connect(ics_data_t *data);
-
-void ics_core_start(ics_data_t *data);
-void ics_core_end(ics_data_t *data);
-
+void ics_core_connect(ics_data_t *data, int port);
+void ics_core_add_account(ics_data_t *data, char *s_ip, char *username, char *password);
+void ics_core_make_call(ics_data_t *data, char *sip_addr);
+void ics_core_answer_call(ics_data_t *data);
+void ics_core_hangup_call(ics_data_t *data, int renew);
+void ics_core_hold_call(ics_data_t *data);
+void ics_core_release_hold(ics_data_t *data);
+void ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2);
+void ics_core_set_register(ics_data_t *data, int renew);
+void ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level);
 void ics_core_clean(ics_data_t *data);
 
-void ics_core_register(ics_data_t *data,char *s_ip, char *username, char*password); // for testing
+void _ics_core_connect(ics_data_t *data, int port);
+void _ics_core_add_account(ics_data_t *data, char *s_ip, char *username, char *password);
+void _ics_core_make_call(ics_data_t *data, char *sip_addr);
+void _ics_core_answer_call(ics_data_t *data);
+void _ics_core_hangup_call(ics_data_t *data, int renew);
+void _ics_core_hold_call(ics_data_t *data);
+void _ics_core_release_hold(ics_data_t *data);
+void _ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2);
+void _ics_core_set_register(ics_data_t *data, int renew);
+void _ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level);
 
-void ics_core_transfer_call_q(ics_data_t *data);
+

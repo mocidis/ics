@@ -83,7 +83,7 @@ void build_call_media_state_event(ics_event_t *event, int call_id, int st_code) 
 	event->call_media_state_event.st_code = st_code;
 }
 
-
+/*
 int is_reg_start_event(ics_event_t *event) {
 	return event->event.eventid == ICS_REG_START;
 }
@@ -102,5 +102,8 @@ int is_transfer_event(ics_event_t *event) {
 int is_call_media_state_event(ics_event_t *event) {
 	return event->event.eventid == ICS_CALL_MEDIA_STATE;
 }
+*/
 
-
+int check_event(ics_event_t *event) {
+	return event->event.eventid;
+}
