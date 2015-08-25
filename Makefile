@@ -1,7 +1,9 @@
+include make-file/build.mak
+
 .PHONY: all clean test
 APP:=sample
 SRC_DIR:=.
-SRCS:=ics-core.c ics-event.c
+SRCS:=ics-core.c ics-event.c ics-command.c
 TESTS:=sample.c
 
 Q_DIR:=../concurrent_queue
@@ -16,7 +18,7 @@ LIBS:=$(shell pkg-config --libs libpjproject)
 all: $(APP) $(LOG)
 
 $(APP): $(SRCS:.c=.o) $(TESTS:.c=.o) $(Q_SRCS:.c=.o) $(O_SRCS:.c=.o)
-	gcc -o $@ $^ $(LIBS)
+	gcc -o $@ $^ $(PJ_LDFLAGS) $(PJ_LDLIBS) $(LIBS)
 
 $(TESTS:.c=.o): %.o: $(SRC_DIR)/test/%.c
 	gcc -c -o $@ $< $(CFLAGS)

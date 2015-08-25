@@ -21,7 +21,7 @@ typedef struct _app_data {
 void ics_core_create(ics_data_t *data);
 void ics_core_config_default(ics_data_t *data);
 void ics_core_init(ics_data_t *data);
-void ics_core_connect(ics_data_t *data);
+void ics_core_connect(ics_data_t *data, int port);
 
 void ics_core_start(ics_data_t *data);
 void ics_core_end(ics_data_t *data);

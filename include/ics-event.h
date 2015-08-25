@@ -78,11 +78,16 @@ void build_call_state(ics_event_t *event, int call_id, char *state);
 void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text);
 void build_call_media_state_event(ics_event_t *event, int call_id, int st_code);
 
+/*
 int is_reg_start_event(ics_event_t *event);
 int is_reg_state_event(ics_event_t *event);
 int is_incoming_call_event(ics_event_t *event);
 int is_call_state_event(ics_event_t *event);
 int is_transfer_event(ics_event_t *event);
 int is_call_media_state_event(ics_event_t *event);
+*/
+
+int check_event(ics_event_t *event);
+
 
 #endif
