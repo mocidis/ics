@@ -30,5 +30,10 @@
 
 # Debug files
 *.dSYM/
+
+# document directories
 html/
 latex/
+
+# original file for conflict resolution
+*.orig
