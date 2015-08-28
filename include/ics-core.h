@@ -35,6 +35,7 @@ void ics_core_release_hold(ics_data_t *data);
 void ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2);
 void ics_core_set_registration(ics_data_t *data, int renew);
 void ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level);
+void ics_core_conference_call(ics_data_t *data, int call_id);
 
 void ics_core_clean(ics_data_t *data);
 
