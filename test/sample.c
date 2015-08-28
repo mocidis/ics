@@ -111,7 +111,7 @@ int main() {
 					ics_core_set_registration(&app_data, 1);
 				break;
 			case 'q':
-				_ics_core_clean(&app_data);
+				ics_core_clean(&app_data);
 				is_running = 0;
 				break;
 			case 'l':

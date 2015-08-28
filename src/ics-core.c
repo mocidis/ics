@@ -95,7 +95,7 @@ void process_event(ics_event_t *event) {
 * \brief Xac dinh call id cua cuoc goi gan nhat
 * \return PJ_SUCCESS
 */
-pj_bool_t find_call(void) {
+static pj_bool_t find_call(void) {
 	int i, max;
 
 	max = pjsua_call_get_max_count();
@@ -134,11 +134,251 @@ void list_active_call(void) {
 }
 #endif
 
+
+/**
+* \fn _ics_core_connect()
+* \brief Tao kenh ket noi (TCP,UDP,TLS,...)
+* \param agr1: ics_data_t *data
+* agr2: int port
+*/
+static void _ics_core_connect(ics_data_t *data, int port) {
+	pj_status_t status;
+	pjsua_transport_config cfg;
+
+	pjsua_transport_config_default(&cfg);
+	cfg.port = port;
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
+	ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot create connect");
+
+	status = pjsua_start();
+	ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot start pjsua");
+}
+
+/**
+* \fn _ics_core_add_account()
+* \brief Them mot tai khoan, neu tai khoan da duoc config se tien hanh register
+* \param agr1: ics_data_t *data
+* agr2: char * server ip
+* agr3: char * username
+* agr4: char * password
+*/
+static void _ics_core_add_account(ics_data_t *data,char *s_ip, char *username, char*password) {
+	pj_status_t status;
+	pjsua_acc_config_default(&data->acfg);	
+	pj_str_t server_ip;
+	pj_str_t uri;
+	pj_str_t passwd;
+
+	char s[50],s1[50];
+	sprintf(s, "sip:%s@%s", username, s_ip);
+	sprintf(s1, "sip:%s",s_ip);
+
+	pj_strdup2(data->pool, &server_ip, s);
+	pj_strdup2(data->pool, &uri, s1);
+	pj_strdup2(data->pool, &passwd, password);
+
+	data->acfg.id = server_ip;
+	data->acfg.reg_uri = uri;
+	data->acfg.cred_count = 1;
+	data->acfg.cred_info[0].realm = pj_str("asterisk");
+	data->acfg.cred_info[0].scheme = pj_str("digest");
+	data->acfg.cred_info[0].username = pj_str(username);
+	data->acfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+	data->acfg.cred_info[0].data = passwd;
+
+	data->acfg.user_data = (void *)data;
+
+	status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
+	ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
+}
+
+/**
+* \fn _ics_core_make_call()
+* \brief Tao cuoc goi
+* \param agr1: ics_data_t *data
+* agr2: char *sip address
+*/
+static void _ics_core_make_call(ics_data_t *data, char * sip_addr) {
+	pj_str_t uri;
+
+	uri = pj_str(sip_addr);
+	pjsua_call_make_call(data->acc_id, &uri, 0, NULL, NULL, NULL);
+}
+
+/**
+* \fn _ics_core_answer_call()
+* \brief Tra loi cuoc goi
+* \param agr1: ics_data_t *data
+*/
+static void _ics_core_answer_call(ics_data_t *data) {
+	if (current_call == PJSUA_INVALID_ID)
+		printf("No current call\n");
+	else {
+		pjsua_call_answer(current_call, 200, NULL, NULL);
+	}
+}
+
+/**
+* \fn _ics_core_hangup_call()
+* \brief Ket thuc cuoc goi
+* \param agr1: ics_data_t *data
+* agr2: int renew (1= hangup all, 0= hangup current call)
+*/
+static void _ics_core_hangup_call(ics_data_t *data, int renew) {
+	if (current_call == PJSUA_INVALID_ID)
+		printf("No current call\n");
+	else {
+		if (renew == -2) 
+			pjsua_call_hangup_all();
+		else {
+			renew = current_call;
+			pjsua_call_hangup(renew, 0, NULL, NULL);	
+		}
+	}
+}
+
+/**
+* \fn _ics_core_hold_call()
+* \brief Giu cuoc goi
+* \param agr1: ics_data_t *data
+*/
+static void _ics_core_hold_call(ics_data_t *data) {
+	if (current_call < 0)
+		printf("No current call\n");
+	else {
+		pjsua_call_set_hold(current_call, NULL);
+	}
+}
+
+/**
+* \fn _ics_core_release_hold()
+* \brief Tha? cuoc goi
+* \param agr1: ics_data_t *data
+* agr2: int port
+*/
+static void _ics_core_release_hold(ics_data_t *data) {
+	if (current_call < 0)
+		printf("No current call\n");
+	else {
+		pjsua_call_reinvite(current_call, PJ_TRUE, NULL);
+	}
+}
+
+/**
+* \fn _ics_core_set_registration()
+* \brief Tuy chinh che do registration
+* \param agr1: ics_data_t *data
+* agr2: int renew(1= re-register, 0= un-register)
+*/
+static void _ics_core_set_registration(ics_data_t *data, int renew) {
+	if (renew == 1 || renew == 0)
+		pjsua_acc_set_registration(data->acc_id, renew);
+	else
+		printf("Invalid input");
+}
+
+/**
+* \fn _ics_core_transfer_call()
+* \brief Chuyen huong cuoc goi
+* \param agr1: ics_data_t *data
+* agr2: int call_id_1
+* agr3: int call_id_2
+*/
+static void _ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
+#if 0
+	if ( (call_id_1 != call_id_2) && pjsua_call_is_active(call_id_1) && pjsua_call_is_active(call_id_2) ) {
+		pjsua_call_xfer_replaces(call_id_1, call_id_2, 0, NULL);
+	}
+	else
+		printf("Cannot transfer call!\n");
+#endif
+
+//For test only:
+#if 1
+	int i, max;
+	pjsua_call_info ci;
+
+	max = pjsua_call_get_count();
+	printf("You have %d active call%s\n", max, (max>1?"s":""));
+
+	for (i = 0; i < max; i++){	
+		if (pjsua_call_is_active(i)) {
+			pjsua_call_get_info(i, &ci);
+			pjsua_call_xfer_replaces(current_call, ci.id, 0, NULL);
+			break;
+		}
+	}
+#endif
+}
+
+static void _ics_core_conference_call(ics_data_t *data, int call_id) {
+	int i, max;
+	max = pjsua_call_get_count();
+	printf("Let's conference call!\n");
+	pjsua_call_info ci;
+
+#if 1
+	if ( (call_id != current_call) && pjsua_call_is_active(call_id)  ) {
+		pjsua_call_reinvite(call_id, PJ_TRUE, NULL);
+		for (i = 0; i < max; i++) {
+			if (pjsua_call_has_media(i) != 0) {
+				pjsua_conf_connect(pjsua_call_get_conf_port(call_id), pjsua_call_get_conf_port(i));		
+				pjsua_conf_connect(pjsua_call_get_conf_port(i), pjsua_call_get_conf_port(call_id));
+			}
+		}
+	}
+	else
+		printf("Cannot transfer call!\n");
+#endif
+
+	//For test only:
+#if 1
+
+
+	for (i = 0; i < max; i++){	
+		if (pjsua_call_is_active(i) && (i != current_call)) {
+			pjsua_call_reinvite(i, PJ_TRUE, NULL);
+			pjsua_call_get_info(i, &ci);
+			pjsua_conf_connect(pjsua_call_get_conf_port(ci.id), pjsua_call_get_conf_port(current_call));		
+			pjsua_conf_connect(pjsua_call_get_conf_port(current_call), pjsua_call_get_conf_port(ci.id));
+		}
+		break;
+	}
+#endif
+
+}
+
+/**
+ * \fn _ics_core_adjust_audio_volume()
+ * \brief Tuy chinh am luong cho mic va speaker
+ * \param agr1: ics_data_t *data
+ * agr2: char *device
+ * agr3: level
+ */
+static void _ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level) {
+	if (strcmp(device,"r") == 0) {
+		pjsua_conf_adjust_rx_level(0, level);
+	}
+	else if (strcmp(device,"t") == 0) {
+		pjsua_conf_adjust_tx_level(0, level);
+	}
+	else
+		printf("Invalid input to adjust device");
+}
+
+void ics_core_clean(ics_data_t *data) {
+	data->f_quit = 0;
+	pjsua_destroy();
+	pj_pool_release(data->pool);
+	pj_caching_pool_destroy(&data->cp);
+}
+
+
 /**
 * \fn on_reg_started(), on_reg_state(), on_incoming_call(), on_call_state(), on_call_transfer_status(), on_call_media_state()
 * \brief cac ham callback
 */
-void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
+static void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
 	ics_data_t *data;
 
 	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
@@ -150,7 +390,7 @@ void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
 	process_event(event);
 }
 
-void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
+static void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 	ics_data_t *data;
 
 	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
@@ -162,7 +402,7 @@ void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 	process_event(event);
 }
 
-void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
+static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
 	ics_data_t *data;
 	pjsua_call_info ci;
 	
@@ -182,7 +422,7 @@ void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data 
 	current_call = call_id;
 }
 
-void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
+static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 	ics_data_t *data;
 	pjsua_call_info ci;
 
@@ -211,7 +451,7 @@ void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 
 }
 
-void on_call_media_state(pjsua_call_id call_id) {
+static void on_call_media_state(pjsua_call_id call_id) {
 	ics_data_t *data;
 	pjsua_call_info ci;
 
@@ -234,7 +474,7 @@ void on_call_media_state(pjsua_call_id call_id) {
 
 }
 
-void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t *st_text, pj_bool_t final, pj_bool_t *p_cont) {
+static void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t *st_text, pj_bool_t final, pj_bool_t *p_cont) {
 	ics_data_t *data;
 	pjsua_call_info ci;
 	current_call = call_id;
@@ -304,244 +544,6 @@ void ics_core_init(ics_data_t *data) {
 	//! Chon sound device
 	dev_count = pjmedia_aud_dev_count();
 	pjsua_set_snd_dev(0, 2);
-}
-
-/**
-* \fn _ics_core_connect()
-* \brief Tao kenh ket noi (TCP,UDP,TLS,...)
-* \param agr1: ics_data_t *data
-* agr2: int port
-*/
-void _ics_core_connect(ics_data_t *data, int port) {
-	pj_status_t status;
-	pjsua_transport_config cfg;
-
-	pjsua_transport_config_default(&cfg);
-	cfg.port = port;
-	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
-	ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot create connect");
-
-	status = pjsua_start();
-	ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot start pjsua");
-}
-
-/**
-* \fn _ics_core_add_account()
-* \brief Them mot tai khoan, neu tai khoan da duoc config se tien hanh register
-* \param agr1: ics_data_t *data
-* agr2: char * server ip
-* agr3: char * username
-* agr4: char * password
-*/
-void _ics_core_add_account(ics_data_t *data,char *s_ip, char *username, char*password) {
-	pj_status_t status;
-	pjsua_acc_config_default(&data->acfg);	
-	pj_str_t server_ip;
-	pj_str_t uri;
-	pj_str_t passwd;
-
-	char s[50],s1[50];
-	sprintf(s, "sip:%s@%s", username, s_ip);
-	sprintf(s1, "sip:%s",s_ip);
-
-	pj_strdup2(data->pool, &server_ip, s);
-	pj_strdup2(data->pool, &uri, s1);
-	pj_strdup2(data->pool, &passwd, password);
-
-	data->acfg.id = server_ip;
-	data->acfg.reg_uri = uri;
-	data->acfg.cred_count = 1;
-	data->acfg.cred_info[0].realm = pj_str("asterisk");
-	data->acfg.cred_info[0].scheme = pj_str("digest");
-	data->acfg.cred_info[0].username = pj_str(username);
-	data->acfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-	data->acfg.cred_info[0].data = passwd;
-
-	data->acfg.user_data = (void *)data;
-
-	status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
-	ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
-}
-
-/**
-* \fn _ics_core_make_call()
-* \brief Tao cuoc goi
-* \param agr1: ics_data_t *data
-* agr2: char *sip address
-*/
-void _ics_core_make_call(ics_data_t *data, char * sip_addr) {
-	pj_str_t uri;
-
-	uri = pj_str(sip_addr);
-	pjsua_call_make_call(data->acc_id, &uri, 0, NULL, NULL, NULL);
-}
-
-/**
-* \fn _ics_core_answer_call()
-* \brief Tra loi cuoc goi
-* \param agr1: ics_data_t *data
-*/
-void _ics_core_answer_call(ics_data_t *data) {
-	if (current_call == PJSUA_INVALID_ID)
-		printf("No current call\n");
-	else {
-		pjsua_call_answer(current_call, 200, NULL, NULL);
-	}
-}
-
-/**
-* \fn _ics_core_hangup_call()
-* \brief Ket thuc cuoc goi
-* \param agr1: ics_data_t *data
-* agr2: int renew (1= hangup all, 0= hangup current call)
-*/
-void _ics_core_hangup_call(ics_data_t *data, int renew) {
-	if (current_call == PJSUA_INVALID_ID)
-		printf("No current call\n");
-	else {
-		if (renew == -2) 
-			pjsua_call_hangup_all();
-		else {
-			renew = current_call;
-			pjsua_call_hangup(renew, 0, NULL, NULL);	
-		}
-	}
-}
-
-/**
-* \fn _ics_core_hold_call()
-* \brief Giu cuoc goi
-* \param agr1: ics_data_t *data
-*/
-void _ics_core_hold_call(ics_data_t *data) {
-	if (current_call < 0)
-		printf("No current call\n");
-	else {
-		pjsua_call_set_hold(current_call, NULL);
-	}
-}
-
-/**
-* \fn _ics_core_release_hold()
-* \brief Tha? cuoc goi
-* \param agr1: ics_data_t *data
-* agr2: int port
-*/
-void _ics_core_release_hold(ics_data_t *data) {
-	if (current_call < 0)
-		printf("No current call\n");
-	else {
-		pjsua_call_reinvite(current_call, PJ_TRUE, NULL);
-	}
-}
-
-/**
-* \fn _ics_core_set_registration()
-* \brief Tuy chinh che do registration
-* \param agr1: ics_data_t *data
-* agr2: int renew(1= re-register, 0= un-register)
-*/
-void _ics_core_set_registration(ics_data_t *data, int renew) {
-	if (renew == 1 || renew == 0)
-		pjsua_acc_set_registration(data->acc_id, renew);
-	else
-		printf("Invalid input");
-}
-
-/**
-* \fn _ics_core_transfer_call()
-* \brief Chuyen huong cuoc goi
-* \param agr1: ics_data_t *data
-* agr2: int call_id_1
-* agr3: int call_id_2
-*/
-void _ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
-#if 0
-	if ( (call_id_1 != call_id_2) && pjsua_call_is_active(call_id_1) && pjsua_call_is_active(call_id_2) ) {
-		pjsua_call_xfer_replaces(call_id_1, call_id_2, 0, NULL);
-	}
-	else
-		printf("Cannot transfer call!\n");
-#endif
-
-//For test only:
-#if 1
-	int i, max;
-	pjsua_call_info ci;
-
-	max = pjsua_call_get_count();
-	printf("You have %d active call%s\n", max, (max>1?"s":""));
-
-	for (i = 0; i < max; i++){	
-		if (pjsua_call_is_active(i)) {
-			pjsua_call_get_info(i, &ci);
-			pjsua_call_xfer_replaces(current_call, ci.id, 0, NULL);
-			break;
-		}
-	}
-#endif
-}
-
-void _ics_core_conference_call(ics_data_t *data, int call_id) {
-	int i, max;
-	max = pjsua_call_get_count();
-	printf("Let's conference call!\n");
-	pjsua_call_info ci;
-
-#if 1
-	if ( (call_id != current_call) && pjsua_call_is_active(call_id)  ) {
-		pjsua_call_reinvite(call_id, PJ_TRUE, NULL);
-		for (i = 0; i < max; i++) {
-			if (pjsua_call_has_media(i) != 0) {
-				pjsua_conf_connect(pjsua_call_get_conf_port(call_id), pjsua_call_get_conf_port(i));		
-				pjsua_conf_connect(pjsua_call_get_conf_port(i), pjsua_call_get_conf_port(call_id));
-			}
-		}
-	}
-	else
-		printf("Cannot transfer call!\n");
-#endif
-
-	//For test only:
-#if 1
-
-
-	for (i = 0; i < max; i++){	
-		if (pjsua_call_is_active(i) && (i != current_call)) {
-			pjsua_call_reinvite(i, PJ_TRUE, NULL);
-			pjsua_call_get_info(i, &ci);
-			pjsua_conf_connect(pjsua_call_get_conf_port(ci.id), pjsua_call_get_conf_port(current_call));		
-			pjsua_conf_connect(pjsua_call_get_conf_port(current_call), pjsua_call_get_conf_port(ci.id));
-		}
-		break;
-	}
-#endif
-
-}
-
-/**
- * \fn _ics_core_adjust_audio_volume()
- * \brief Tuy chinh am luong cho mic va speaker
- * \param agr1: ics_data_t *data
- * agr2: char *device
- * agr3: level
- */
-void _ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level) {
-	if (strcmp(device,"r") == 0) {
-		pjsua_conf_adjust_rx_level(0, level);
-	}
-	else if (strcmp(device,"t") == 0) {
-		pjsua_conf_adjust_tx_level(0, level);
-	}
-	else
-		printf("Invalid input to adjust device");
-}
-
-void _ics_core_clean(ics_data_t *data) {
-	data->f_quit = 0;
-	pjsua_destroy();
-	pj_pool_release(data->pool);
-	pj_caching_pool_destroy(&data->cp);
 }
 
 //Put command into queue
@@ -634,15 +636,6 @@ void ics_core_conference_call(ics_data_t *data, int call_id) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_core_clean(ics_data_t *data) {
-	opool_item_t *p_item = opool_get(&data->opool);
-
-	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
-	build_clean_cmd((ics_cmd_t *)p_item->data);
-	queue_enqueue(&data->queue, (void *)p_item);
-}
-
-
 //Dequeue and do command
 
 /**
@@ -692,8 +685,6 @@ static void *thread_proc(void *param) {
 				break;
 			case CMD_CONFERENCE_CALL:
 				_ics_core_conference_call(data, cmd->conference_call_cmd.call_id);
-			case CMD_CLEAN:
-				_ics_core_clean(data);
 				break;
 			default:
 				printf("Invalid command id %d\n", cmd->cmd.cmd_id);
