@@ -23,7 +23,7 @@ latex:
 	mkdir -p $@
 
 $(APP): $(SRCS:.c=.o) $(TESTS:.c=.o) $(Q_SRCS:.c=.o) $(O_SRCS:.c=.o)
-	gcc -o $@ $^ $(LIBS)
+	gcc -o $@ $^ $(PJ_LDFLAGS) $(PJ_LDLIBS) $(LIBS)
 
 $(TESTS:.c=.o): %.o: $(SRC_DIR)/test/%.c
 	gcc -c -o $@ $< $(CFLAGS)

@@ -24,7 +24,6 @@ typedef struct _app_data {
 }ics_data_t;
 
 void ics_core_init(ics_data_t *data);
-
 void ics_core_connect(ics_data_t *data, int port);
 void ics_core_add_account(ics_data_t *data, char *s_ip, char *username, char *password);
 void ics_core_receive_command(ics_data_t *data);
