@@ -138,10 +138,10 @@ void list_active_call(void) {
 /**
 * \fn _ics_core_connect()
 * \brief Tao kenh ket noi (TCP,UDP,TLS,...)
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: int port
 */
-static void _ics_core_connect(ics_data_t *data, int port) {
+static void _ics_core_connect(ics_t *data, int port) {
 	pj_status_t status;
 	pjsua_transport_config cfg;
 
@@ -157,12 +157,12 @@ static void _ics_core_connect(ics_data_t *data, int port) {
 /**
 * \fn _ics_core_add_account()
 * \brief Them mot tai khoan, neu tai khoan da duoc config se tien hanh register
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: char * server ip
 * agr3: char * username
 * agr4: char * password
 */
-static void _ics_core_add_account(ics_data_t *data,char *s_ip, char *username, char*password) {
+static void _ics_core_add_account(ics_t *data,char *s_ip, char *username, char*password) {
 	pj_status_t status;
 	pjsua_acc_config_default(&data->acfg);	
 	pj_str_t server_ip;
@@ -195,10 +195,10 @@ static void _ics_core_add_account(ics_data_t *data,char *s_ip, char *username, c
 /**
 * \fn _ics_core_make_call()
 * \brief Tao cuoc goi
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: char *sip address
 */
-static void _ics_core_make_call(ics_data_t *data, char * sip_addr) {
+static void _ics_core_make_call(ics_t *data, char * sip_addr) {
 	pj_str_t uri;
 
 	uri = pj_str(sip_addr);
@@ -208,9 +208,9 @@ static void _ics_core_make_call(ics_data_t *data, char * sip_addr) {
 /**
 * \fn _ics_core_answer_call()
 * \brief Tra loi cuoc goi
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 */
-static void _ics_core_answer_call(ics_data_t *data) {
+static void _ics_core_answer_call(ics_t *data) {
 	if (current_call == PJSUA_INVALID_ID)
 		printf("No current call\n");
 	else {
@@ -221,10 +221,10 @@ static void _ics_core_answer_call(ics_data_t *data) {
 /**
 * \fn _ics_core_hangup_call()
 * \brief Ket thuc cuoc goi
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: int renew (1= hangup all, 0= hangup current call)
 */
-static void _ics_core_hangup_call(ics_data_t *data, int renew) {
+static void _ics_core_hangup_call(ics_t *data, int renew) {
 	if (current_call == PJSUA_INVALID_ID)
 		printf("No current call\n");
 	else {
@@ -240,9 +240,9 @@ static void _ics_core_hangup_call(ics_data_t *data, int renew) {
 /**
 * \fn _ics_core_hold_call()
 * \brief Giu cuoc goi
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 */
-static void _ics_core_hold_call(ics_data_t *data) {
+static void _ics_core_hold_call(ics_t *data) {
 	if (current_call < 0)
 		printf("No current call\n");
 	else {
@@ -253,10 +253,10 @@ static void _ics_core_hold_call(ics_data_t *data) {
 /**
 * \fn _ics_core_release_hold()
 * \brief Tha? cuoc goi
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: int port
 */
-static void _ics_core_release_hold(ics_data_t *data) {
+static void _ics_core_release_hold(ics_t *data) {
 	if (current_call < 0)
 		printf("No current call\n");
 	else {
@@ -267,10 +267,10 @@ static void _ics_core_release_hold(ics_data_t *data) {
 /**
 * \fn _ics_core_set_registration()
 * \brief Tuy chinh che do registration
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: int renew(1= re-register, 0= un-register)
 */
-static void _ics_core_set_registration(ics_data_t *data, int renew) {
+static void _ics_core_set_registration(ics_t *data, int renew) {
 	if (renew == 1 || renew == 0)
 		pjsua_acc_set_registration(data->acc_id, renew);
 	else
@@ -280,11 +280,11 @@ static void _ics_core_set_registration(ics_data_t *data, int renew) {
 /**
 * \fn _ics_core_transfer_call()
 * \brief Chuyen huong cuoc goi
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2: int call_id_1
 * agr3: int call_id_2
 */
-static void _ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
+static void _ics_core_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
 #if 0
 	if ( (call_id_1 != call_id_2) && pjsua_call_is_active(call_id_1) && pjsua_call_is_active(call_id_2) ) {
 		pjsua_call_xfer_replaces(call_id_1, call_id_2, 0, NULL);
@@ -311,7 +311,7 @@ static void _ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id
 #endif
 }
 
-static void _ics_core_conference_call(ics_data_t *data, int call_id) {
+static void _ics_core_conference_call(ics_t *data, int call_id) {
 	int i, max;
 	max = pjsua_call_get_count();
 	printf("Let's conference call!\n");
@@ -351,11 +351,11 @@ static void _ics_core_conference_call(ics_data_t *data, int call_id) {
 /**
  * \fn _ics_core_adjust_audio_volume()
  * \brief Tuy chinh am luong cho mic va speaker
- * \param agr1: ics_data_t *data
+ * \param agr1: ics_t *data
  * agr2: char *device
  * agr3: level
  */
-static void _ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level) {
+static void _ics_core_adjust_audio_volume(ics_t *data, char *device, float level) {
 	if (strcmp(device,"r") == 0) {
 		pjsua_conf_adjust_rx_level(0, level);
 	}
@@ -366,7 +366,7 @@ static void _ics_core_adjust_audio_volume(ics_data_t *data, char *device, float 
 		printf("Invalid input to adjust device");
 }
 
-void ics_core_clean(ics_data_t *data) {
+void ics_core_clean(ics_t *data) {
 	data->f_quit = 0;
 	pjsua_destroy();
 	pj_pool_release(data->pool);
@@ -379,9 +379,9 @@ void ics_core_clean(ics_data_t *data) {
 * \brief cac ham callback
 */
 static void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
-	ics_data_t *data;
+	ics_t *data;
 
-	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
+	data = (ics_t *)pjsua_acc_get_user_data(acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
 	ics_event_t *event = (ics_event_t *)p_item->data;
 
@@ -391,9 +391,9 @@ static void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
 }
 
 static void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
-	ics_data_t *data;
+	ics_t *data;
 
-	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
+	data = (ics_t *)pjsua_acc_get_user_data(acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
 	ics_event_t *event = (ics_event_t *)p_item->data;
 
@@ -403,12 +403,12 @@ static void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 }
 
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
-	ics_data_t *data;
+	ics_t *data;
 	pjsua_call_info ci;
 	
 
 	pjsua_call_get_info(call_id, &ci);
-	data = (ics_data_t *)pjsua_acc_get_user_data(acc_id);
+	data = (ics_t *)pjsua_acc_get_user_data(acc_id);
 
 	//_ics_core_hold_call(data);
 
@@ -423,7 +423,7 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_r
 }
 
 static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
-	ics_data_t *data;
+	ics_t *data;
 	pjsua_call_info ci;
 
 	PJ_UNUSED_ARG(e);
@@ -442,7 +442,7 @@ static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 		find_call();
 	}
 
-	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);
+	data = (ics_t *)pjsua_acc_get_user_data(ci.acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
 	build_call_state_event((ics_event_t *)p_item->data, call_id, ci.state_text.ptr);	
 	ics_event_t *event = (ics_event_t *)p_item->data;
@@ -452,7 +452,7 @@ static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 }
 
 static void on_call_media_state(pjsua_call_id call_id) {
-	ics_data_t *data;
+	ics_t *data;
 	pjsua_call_info ci;
 
 	pjsua_call_get_info(call_id, &ci);
@@ -464,7 +464,7 @@ static void on_call_media_state(pjsua_call_id call_id) {
 	}
 
 	pjsua_call_get_info(call_id, &ci);
-	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);
+	data = (ics_t *)pjsua_acc_get_user_data(ci.acc_id);
 	opool_item_t *p_item = opool_get(&data->opool);
 	build_call_media_state_event((ics_event_t *)p_item->data, call_id, ci.media_status);	
 	ics_event_t *event = (ics_event_t *)p_item->data;
@@ -475,13 +475,13 @@ static void on_call_media_state(pjsua_call_id call_id) {
 }
 
 static void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t *st_text, pj_bool_t final, pj_bool_t *p_cont) {
-	ics_data_t *data;
+	ics_t *data;
 	pjsua_call_info ci;
 	current_call = call_id;
 	int len;
 
 	pjsua_call_get_info(call_id, &ci);
-	data = (ics_data_t *)pjsua_acc_get_user_data(ci.acc_id);	
+	data = (ics_t *)pjsua_acc_get_user_data(ci.acc_id);	
 
 	len = (int)st_text->slen;
 	if (st_text->ptr[len] == '\n' || st_text->ptr[len] == '\r')
@@ -499,9 +499,9 @@ static void on_call_transfer_status (pjsua_call_id call_id, int st_code, const p
 /**
 * \fn ics_core_init()
 * \brief Khoi tao cac thanh phan can thiet cho chuong trinh
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 */
-void ics_core_init(ics_data_t *data) {
+void ics_core_init(ics_t *data) {
 	int dev_count;
 
 	//! CREATE
@@ -550,45 +550,45 @@ void ics_core_init(ics_data_t *data) {
 /**
 * \fn ics_core_...()
 * \brief Tao mot cmd object
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 * agr2:...
 */
-void ics_core_connect(ics_data_t *data, int port){
+void ics_core_connect(ics_t *data, int port){
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
 	build_connect_cmd((ics_cmd_t *)p_item->data, port);
 	queue_enqueue(&data->queue, (void *)p_item);
 }
-void ics_core_add_account(ics_data_t *data, char *s_ip, char *username, char *password) {
+void ics_core_add_account(ics_t *data, char *s_ip, char *username, char *password) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
 	build_add_acc_cmd((ics_cmd_t *)p_item->data, s_ip, username, password);
 	queue_enqueue(&data->queue, (void *)p_item);
 }
-void ics_core_make_call(ics_data_t *data, char *sip_addr) {
+void ics_core_make_call(ics_t *data, char *sip_addr) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
 	build_make_call_cmd((ics_cmd_t *)p_item->data, sip_addr);
 	queue_enqueue(&data->queue, (void *)p_item);
 }
-void ics_core_answer_call(ics_data_t *data) {
+void ics_core_answer_call(ics_t *data) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
 	build_answer_call_cmd((ics_cmd_t *)p_item->data);
 	queue_enqueue(&data->queue, (void *)p_item);
 }
-void ics_core_hangup_call(ics_data_t *data, int renew) {
+void ics_core_hangup_call(ics_t *data, int renew) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
 	build_hangup_call_cmd((ics_cmd_t *)p_item->data, renew);
 	queue_enqueue(&data->queue, (void *)p_item);
 }
-void ics_core_hold_call(ics_data_t *data) {
+void ics_core_hold_call(ics_t *data) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -596,7 +596,7 @@ void ics_core_hold_call(ics_data_t *data) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_core_release_hold(ics_data_t *data) {
+void ics_core_release_hold(ics_t *data) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -604,7 +604,7 @@ void ics_core_release_hold(ics_data_t *data) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
+void ics_core_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -612,7 +612,7 @@ void ics_core_transfer_call(ics_data_t *data, int call_id_1, int call_id_2) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_core_set_registration(ics_data_t *data, int renew) {
+void ics_core_set_registration(ics_t *data, int renew) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -620,7 +620,7 @@ void ics_core_set_registration(ics_data_t *data, int renew) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level) {
+void ics_core_adjust_audio_volume(ics_t *data, char *device, float level) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -628,7 +628,7 @@ void ics_core_adjust_audio_volume(ics_data_t *data, char *device, float level) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_core_conference_call(ics_data_t *data, int call_id) {
+void ics_core_conference_call(ics_t *data, int call_id) {
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -644,7 +644,7 @@ void ics_core_conference_call(ics_data_t *data, int call_id) {
 * \param agr1: void * param
 */
 static void *thread_proc(void *param) {
-	ics_data_t *data = (ics_data_t *) param;	
+	ics_t *data = (ics_t *) param;	
 	while(data->f_quit) {
 ;
 		opool_item_t *p_item = opool_get(&data->opool);
@@ -699,9 +699,9 @@ static void *thread_proc(void *param) {
 /**
 * \fn ics_core_receive_command()
 * \brief Tao mot thead moi co chuc nang nhan thong tin command
-* \param agr1: ics_data_t *data
+* \param agr1: ics_t *data
 */
-void ics_core_receive_command(ics_data_t *data) {
+void ics_core_receive_command(ics_t *data) {
 	data->f_quit = 1;
 	int rc = pj_thread_create(data->pool, "ics_core_loop_thread", (pj_thread_proc*)&thread_proc, data, PJ_THREAD_DEFAULT_STACK_SIZE, 0, &data->thread);
 	ICS_EXIT_IF_TRUE(rc != PJ_SUCCESS, "Cannot start thread for ics_core_start");

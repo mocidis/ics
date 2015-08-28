@@ -11,13 +11,16 @@ void on_call_transfer_impl(int call_id, int st_code, char *st_text);
 void on_call_media_state_impl(int call_id, int st_code);
 
 int main() {
-	ics_data_t app_data;
+	ics_t app_data;
+	
+	//For test only
 	char option[10];
-	char *retVal;
 	int is_running;
 	int chose;
 	char sip_add[50];
+	//
 
+	
 	ics_core_init(&app_data);
 
 	ics_core_set_reg_start_callback(&on_reg_start_impl);
