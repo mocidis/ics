@@ -2,6 +2,7 @@
 #include "ics-core.h"
 
 void print_menu();
+
 void on_reg_start_impl(int account_id);
 void on_reg_state_impl(int account_id, char* is_registration, int code, char *reason);
 void on_incoming_call_impl(int account_id, int call_id, char *remote_contact, char *local_contact);
@@ -43,6 +44,8 @@ int main() {
 				printf("1.quy2@192.168.2.50\n");
 				printf("2.quy3@192.168.2.50\n");
 				printf("3.quy10@192.168.2.50\n");
+				printf("4.ntt@192.168.2.50\n");
+				printf("5.ntt1@191.168.2.50\n");
 				if (scanf("%d",&chose) != 1){
 					printf("Invalid input value\n");
 				}
@@ -59,6 +62,15 @@ int main() {
 						strcpy(sip_add, "sip:quy10@192.168.2.50");
 						ics_core_make_call(&app_data, sip_add);
 						break;
+					case 4:
+						strcpy(sip_add, "sip:ntt@192.168.2.50");
+						ics_core_make_call(&app_data, sip_add);
+						break;
+					case 5:
+						strcpy(sip_add, "sip:ntt1@192.168.2.50");
+						ics_core_make_call(&app_data, sip_add);
+						break;
+
 					default:
 						printf("Press 'm' to make another call\n");
 						break;
@@ -69,7 +81,7 @@ int main() {
 				break;
 			case 'h':
 				if (option[1] == 'a')
-					ics_core_hangup_call(&app_data, 1);
+					ics_core_hangup_call(&app_data, -2);
 				else
 					ics_core_hangup_call(&app_data, 0);
 				break;
@@ -86,18 +98,24 @@ int main() {
 				else
 					ics_core_transfer_call(&app_data, 1, 2);
 				break;
+			case 'c':
+				ics_core_conference_call(&app_data, 1);
+				break;
 			case 'u':
-				ics_core_set_register(&app_data, 0);
+				ics_core_set_registration(&app_data, 0);
 				break;
 			case 'r':
 				if (option[1] == 'x')
 					ics_core_adjust_audio_volume(&app_data, "r", atof(&option[3])); // Adjust speaker levela (Recevicer)
 				else
-					ics_core_set_register(&app_data, 1);
+					ics_core_set_registration(&app_data, 1);
 				break;
 			case 'q':
 				_ics_core_clean(&app_data);
 				is_running = 0;
+				break;
+			case 'l':
+				list_active_call();
 				break;
 			case 'p':
 				print_menu();
@@ -105,7 +123,6 @@ int main() {
 			default:
 				break;
 		}
-		usleep(1000);
 	}
 	return 0;
 }
@@ -120,6 +137,7 @@ void print_menu() {
 	puts("|  H  :Hold call             |");
 	puts("|  R  :Release hold          |");
 	puts("|  t  :Tranfer call          |");
+	puts("|  c  :Conference call       |");
 	puts("|  u  :Un-register           |");
 	puts("|  r  :Re-register           |");
 	puts("|----------------------------|");

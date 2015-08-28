@@ -13,7 +13,8 @@ enum {
 	CMD_SET_REGISTER = 9,
 	CMD_CLEAN = 10,
 	CMD_ADJUST_AUDIO = 11,
-	CMD_END = 12
+	CMD_CONFERENCE_CALL = 12,
+	CMD_END = 13
 };
 
 extern char *ICS_CMD_NAME[];
@@ -69,16 +70,21 @@ typedef struct ics_transfer_call_cmd_s {
 	int call_id_2;
 } ics_transfer_call_cmd_t;
 
-typedef struct ics_set_register_cmd_s {
+typedef struct ics_set_registration_cmd_s {
 	ICS_CMD_COMMON_FIELDS;
 	int renew;
-} ics_set_register_cmd_t;
+} ics_set_registration_cmd_t;
 
 typedef struct ics_adjust_audio_cmd_s {
 	ICS_CMD_COMMON_FIELDS;
 	char device[10];
         float level;
 } ics_adjust_audio_cmd_t;
+
+typedef struct ics_conference_call_cmd_s {
+	ICS_CMD_COMMON_FIELDS;
+	int call_id;
+} ics_conference_call_cmd_t;
 
 typedef struct ics_clean_cmd_s {
 	ICS_CMD_COMMON_FIELDS;
@@ -95,8 +101,9 @@ typedef union ics_cmd_s {
 	ics_hold_call_cmd_t hold_call_cmd;
 	ics_release_hold_cmd_t release_hold_cmd;
 	ics_transfer_call_cmd_t transfer_call_cmd;
-	ics_set_register_cmd_t set_register_cmd;
+	ics_set_registration_cmd_t set_registration_cmd;
 	ics_adjust_audio_cmd_t adjust_audio_cmd;
+	ics_conference_call_cmd_t conference_call_cmd;
 	ics_clean_cmd_t clean_cmd;
 } ics_cmd_t;
 
@@ -109,8 +116,9 @@ void build_hangup_cal_cmd(ics_cmd_t *cmd, int renew);
 void build_hold_call_cmd(ics_cmd_t *cmd);
 void build_release_call_cmd(ics_cmd_t *cmd);
 void build_transfer_call_cmd(ics_cmd_t *cmd, int call_id_1, int call_id_2);
-void build_set_register_cmd(ics_cmd_t *cmd, int renew);
+void build_set_registration_cmd(ics_cmd_t *cmd, int renew);
 void build_adjust_audio_cmd(ics_cmd_t *cmd, char *device, float level);
+void build_conference_call_cmd(ics_cmd_t *cmd, int call_id);
 void build_clean_cmd(ics_cmd_t *cmd);
 
 int check_cmd_type(ics_cmd_t *cmd);

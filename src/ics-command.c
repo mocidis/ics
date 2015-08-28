@@ -18,7 +18,8 @@ char *ICS_CMD_NAME[] = {
 	"CMD_RELEASE_HOLD",
 	"CMD_TRANSFER_CALL",
 	"CMD_SET_REGISTRER",
-	"CMD_ADJUST_AUDIO" , 
+	"CMD_ADJUST_AUDIO" ,
+	"CMD_CONFERENCE_CALL",
 	"CMD_CLEAN"
 };
 
@@ -68,9 +69,9 @@ void build_transfer_call_cmd(ics_cmd_t *cmd, int call_id_1, int call_id_2) {
 	cmd->transfer_call_cmd.call_id_1 = call_id_1;
 	cmd->transfer_call_cmd.call_id_2 = call_id_2;
 }
-void build_set_register_cmd(ics_cmd_t *cmd, int renew) {
+void build_set_registration_cmd(ics_cmd_t *cmd, int renew) {
 	cmd->init_cmd.cmd_id = CMD_SET_REGISTER;
-	cmd->set_register_cmd.renew = renew;
+	cmd->set_registration_cmd.renew = renew;
 }
 void build_adjust_audio_cmd(ics_cmd_t *cmd, char *device, float level) {
 	int device_len = sizeof(cmd->adjust_audio_cmd.device);
@@ -81,6 +82,11 @@ void build_adjust_audio_cmd(ics_cmd_t *cmd, char *device, float level) {
 	ICS_EXIT_IF_TRUE(sizeof(device[0]) > device_len, "Overflow in adjust_audio_cmd.device\n");
 	strncpy(cmd->adjust_audio_cmd.device, device, device_len);
 	cmd->adjust_audio_cmd.level = level;
+}
+
+void build_conference_call_cmd(ics_cmd_t *cmd, int call_id) {
+	cmd->conference_call_cmd.cmd_id = CMD_CONFERENCE_CALL;
+	cmd->conference_call_cmd.call_id = call_id;
 }
 
 void build_clean_cmd(ics_cmd_t *cmd) {
