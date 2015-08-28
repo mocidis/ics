@@ -693,6 +693,7 @@ static void *thread_proc(void *param) {
 		// Event processing done
 		opool_free(&data->opool, p_item);
 	}
+    return NULL;
 }
 
 /**
