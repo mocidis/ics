@@ -112,7 +112,7 @@ void build_connect_cmd(ics_cmd_t *cmd, int port);
 void build_add_acc_cmd(ics_cmd_t *cmd, char *s_ip, char *username, char *password);
 void build_make_call_cmd(ics_cmd_t *cmd, char *sip_addr);
 void build_answer_call_cmd(ics_cmd_t *cmd);
-void build_hangup_cal_cmd(ics_cmd_t *cmd, int renew);
+void build_hangup_call_cmd(ics_cmd_t *cmd, int renew);
 void build_hold_call_cmd(ics_cmd_t *cmd);
 void build_release_call_cmd(ics_cmd_t *cmd);
 void build_transfer_call_cmd(ics_cmd_t *cmd, int call_id_1, int call_id_2);
@@ -124,11 +124,6 @@ void build_clean_cmd(ics_cmd_t *cmd);
 int check_cmd_type(ics_cmd_t *cmd);
 
 #endif
-
-
-
-
-
 
 
 

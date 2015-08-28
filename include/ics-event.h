@@ -74,7 +74,7 @@ typedef union ics_event_s {
 void build_reg_start_event(ics_event_t *event, int account_id);
 void build_reg_state_event(ics_event_t *event, int account_id, int is_registration, int code, char *reason, int reason_len);
 void build_incoming_call_event(ics_event_t *event, int account_id,int call_id, char *remote_contact, char *local_contact);
-void build_call_state(ics_event_t *event, int call_id, char *state);
+void build_call_state_event(ics_event_t *event, int call_id, char *state);
 void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text);
 void build_call_media_state_event(ics_event_t *event, int call_id, int st_code);
 

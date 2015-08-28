@@ -10,7 +10,7 @@ Q_SRCS:=queue.c
 O_DIR:=../object-pool
 O_SRCS:=object-pool.c
 
-CFLAGS:=-I$(SRC_DIR)/include -I$(Q_DIR)/include -I$(O_DIR)/include $(shell pkg-config --cflags libpjproject) -Werror
+CFLAGS:=-std=c99 -I$(SRC_DIR)/include -I$(Q_DIR)/include -I$(O_DIR)/include $(shell pkg-config --cflags libpjproject) -Werror
 LIBS:=$(shell pkg-config --libs libpjproject)
 
 all: $(APP) $(LOG)
