@@ -22,7 +22,16 @@ void (*on_call_state_p)(int call_id, char *st_text);
 void (*on_call_transfer_p)(int call_id, int st_code, char *st_text);
 void (*on_call_media_state_p)(int call_id, int st_code);
 
+void on_reg_start_default(void) {};
 
+void ics_core_set_default_callback(void (*func)()) {
+	on_reg_start_p = func;
+	on_reg_state_p = func;
+	on_incoming_call_p = func;
+	on_call_state_p = func;
+	on_call_transfer_p = func;
+	on_call_media_state_p = func;
+}
 void ics_core_set_reg_start_callback(void (*func)(int accid)) {
 	on_reg_start_p = func;
 }
@@ -110,13 +119,12 @@ static pj_bool_t find_call(void) {
 }
 
 //Maybe useful someday
-#if 1
-
 /**
-* \fn list_active_call()
+* \fn ics_core_list_call()
 * \brief Liet ke danh sach cac cuoc goi hien co
 */
-void list_active_call(void) {
+
+void _ics_core_list_call(ics_t *data) {
 	int i, max;
 	pjsua_call_info ci;
 
@@ -132,7 +140,6 @@ void list_active_call(void) {
 	}
 	printf("Your current call id : %d\n", current_call);
 }
-#endif
 
 
 /**
@@ -431,8 +438,7 @@ static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 	pjsua_call_get_info(call_id, &ci);
 
 //Handle hold call problem
-#if 1
-	printf("current_call = %d\n", current_call);
+#if 0
 	if ( (strcmp(ci.state_text.ptr,"CALLING") == 0) && (current_call != PJSUA_INVALID_ID) )
 		_ics_core_hold_call(data);
 #endif
@@ -554,6 +560,7 @@ void ics_core_init(ics_t *data) {
 * agr2:...
 */
 void ics_core_connect(ics_t *data, int port){
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -561,6 +568,7 @@ void ics_core_connect(ics_t *data, int port){
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 void ics_core_add_account(ics_t *data, char *s_ip, char *username, char *password) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -568,6 +576,7 @@ void ics_core_add_account(ics_t *data, char *s_ip, char *username, char *passwor
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 void ics_core_make_call(ics_t *data, char *sip_addr) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -575,6 +584,7 @@ void ics_core_make_call(ics_t *data, char *sip_addr) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 void ics_core_answer_call(ics_t *data) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -582,6 +592,7 @@ void ics_core_answer_call(ics_t *data) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 void ics_core_hangup_call(ics_t *data, int renew) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -589,6 +600,7 @@ void ics_core_hangup_call(ics_t *data, int renew) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 void ics_core_hold_call(ics_t *data) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -597,6 +609,7 @@ void ics_core_hold_call(ics_t *data) {
 }
 
 void ics_core_release_hold(ics_t *data) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -605,6 +618,7 @@ void ics_core_release_hold(ics_t *data) {
 }
 
 void ics_core_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -613,6 +627,7 @@ void ics_core_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
 }
 
 void ics_core_set_registration(ics_t *data, int renew) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -621,6 +636,7 @@ void ics_core_set_registration(ics_t *data, int renew) {
 }
 
 void ics_core_adjust_audio_volume(ics_t *data, char *device, float level) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -629,6 +645,7 @@ void ics_core_adjust_audio_volume(ics_t *data, char *device, float level) {
 }
 
 void ics_core_conference_call(ics_t *data, int call_id) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
 	opool_item_t *p_item = opool_get(&data->opool);
 
 	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
@@ -636,6 +653,14 @@ void ics_core_conference_call(ics_t *data, int call_id) {
 	queue_enqueue(&data->queue, (void *)p_item);
 }
 
+void ics_core_list_call(ics_t *data) {
+	ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_core_start function first\n");
+	opool_item_t *p_item = opool_get(&data->opool);
+
+	ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
+	build_list_call_cmd((ics_cmd_t *)p_item->data);
+	queue_enqueue(&data->queue, (void *)p_item);
+}
 //Dequeue and do command
 
 /**
@@ -686,6 +711,9 @@ static void *thread_proc(void *param) {
 			case CMD_CONFERENCE_CALL:
 				_ics_core_conference_call(data, cmd->conference_call_cmd.call_id);
 				break;
+			case CMD_LIST_CALL:
+				_ics_core_list_call(data);
+				break;
 			default:
 				printf("Invalid command id %d\n", cmd->cmd.cmd_id);
 				break;
@@ -697,12 +725,13 @@ static void *thread_proc(void *param) {
 }
 
 /**
-* \fn ics_core_receive_command()
+* \fn ics_core_start()
 * \brief Tao mot thead moi co chuc nang nhan thong tin command
 * \param agr1: ics_t *data
 */
-void ics_core_receive_command(ics_t *data) {
+void ics_core_start(ics_t *data) {
 	data->f_quit = 1;
+	data->f_start = 1;
 	int rc = pj_thread_create(data->pool, "ics_core_loop_thread", (pj_thread_proc*)&thread_proc, data, PJ_THREAD_DEFAULT_STACK_SIZE, 0, &data->thread);
 	ICS_EXIT_IF_TRUE(rc != PJ_SUCCESS, "Cannot start thread for ics_core_start");
 }

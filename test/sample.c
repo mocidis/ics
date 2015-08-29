@@ -23,21 +23,21 @@ int main() {
 	
 	ics_core_init(&app_data);
 
-	ics_core_set_reg_start_callback(&on_reg_start_impl);
-	ics_core_set_reg_state_callback(&on_reg_state_impl);
+	ics_core_set_default_callback(&on_reg_start_default);
+
+	//ics_core_set_reg_start_callback(&on_reg_start_impl);
+	//ics_core_set_reg_state_callback(&on_reg_state_impl);
 	ics_core_set_incoming_call_callback(&on_incoming_call_impl);
 	ics_core_set_call_state_callback(&on_call_state_impl);
 	ics_core_set_call_transfer_callback(&on_call_transfer_impl);
 	ics_core_set_call_media_state_callback(&on_call_media_state_impl);
 
+	ics_core_start(&app_data);
 	ics_core_connect(&app_data, 12345);
 	ics_core_add_account(&app_data, "192.168.2.50", "quy", "1234");
 
-	ics_core_receive_command(&app_data);
-
 	is_running = 1;
 	while(is_running) {
-		//	print_menu();
 		if (fgets(option, sizeof(option), stdin) == NULL ) {
 			puts("NULL command\n");
 		}
@@ -118,7 +118,7 @@ int main() {
 				is_running = 0;
 				break;
 			case 'l':
-				list_active_call();
+				ics_core_list_call(&app_data);
 				break;
 			case 'p':
 				print_menu();

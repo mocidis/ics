@@ -20,6 +20,7 @@ char *ICS_CMD_NAME[] = {
 	"CMD_SET_REGISTRER",
 	"CMD_ADJUST_AUDIO" ,
 	"CMD_CONFERENCE_CALL",
+	"CMD_LIST_CALL",
 	"CMD_CLEAN"
 };
 
@@ -89,8 +90,11 @@ void build_conference_call_cmd(ics_cmd_t *cmd, int call_id) {
 	cmd->conference_call_cmd.call_id = call_id;
 }
 
+void build_list_call_cmd(ics_cmd_t *cmd) {
+	cmd->list_call_cmd.cmd_id = CMD_LIST_CALL;
+}
+
 void build_clean_cmd(ics_cmd_t *cmd) {
-	cmd->cmd.cmd_id	= CMD_CLEAN;
 	cmd->clean_cmd.cmd_id = CMD_CLEAN;
 }
 
