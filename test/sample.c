@@ -49,6 +49,7 @@ int main() {
 				printf("3.quy10@192.168.2.50\n");
 				printf("4.ntt@192.168.2.50\n");
 				printf("5.ntt1@191.168.2.50\n");
+				printf("6. 1\n");
 				if (scanf("%d",&chose) != 1){
 					printf("Invalid input value\n");
 				}
@@ -71,6 +72,10 @@ int main() {
 						break;
 					case 5:
 						strcpy(sip_add, "sip:ntt1@192.168.2.50");
+						ics_core_make_call(&app_data, sip_add);
+						break;
+					case 6:
+						strcpy(sip_add, "sip:1@192.168.2.50");
 						ics_core_make_call(&app_data, sip_add);
 						break;
 
