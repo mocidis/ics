@@ -25,8 +25,8 @@ int main() {
 
 	ics_core_set_default_callback(&on_reg_start_default);
 
-	//ics_core_set_reg_start_callback(&on_reg_start_impl);
-	//ics_core_set_reg_state_callback(&on_reg_state_impl);
+	ics_core_set_reg_start_callback(&on_reg_start_impl);
+	ics_core_set_reg_state_callback(&on_reg_state_impl);
 	ics_core_set_incoming_call_callback(&on_incoming_call_impl);
 	ics_core_set_call_state_callback(&on_call_state_impl);
 	ics_core_set_call_transfer_callback(&on_call_transfer_impl);

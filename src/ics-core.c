@@ -72,7 +72,7 @@ void process_event(ics_event_t *event) {
 			break;
 		case ICS_REG_STATE:
 			on_reg_state_p(event->reg_state_event.account_id, 
-					(event->reg_state_event.is_registration>0 ? "Yes" : "No"), 
+					(event->reg_state_event.is_registration>0 && event->reg_state_event.is_registration < 300 ? "Yes" : "No"), 
 					event->reg_state_event.code, 
 					event->reg_state_event.reason);
 			break;
