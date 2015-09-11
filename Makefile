@@ -1,7 +1,7 @@
 .PHONY: all clean test doc
 APP:=sample
 SRC_DIR:=.
-SRCS:=ics-core.c ics-event.c ics-command.c
+SRCS:=ics.c ics-event.c ics-command.c
 TESTS:=sample.c
 
 C_DIR:=../common

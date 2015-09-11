@@ -1,5 +1,5 @@
 #include <pjsua-lib/pjsua.h>
-#include "ics-core.h"
+#include "ics.h"
 
 void print_menu();
 
@@ -19,22 +19,21 @@ int main() {
 	int chose;
 	char sip_add[50];
 	//
-
 	
-	ics_core_init(&app_data);
+	ics_init(&app_data);
 
-	ics_core_set_default_callback(&on_reg_start_default);
+	ics_set_default_callback(&on_reg_start_default);
 
-	ics_core_set_reg_start_callback(&on_reg_start_impl);
-	ics_core_set_reg_state_callback(&on_reg_state_impl);
-	ics_core_set_incoming_call_callback(&on_incoming_call_impl);
-	ics_core_set_call_state_callback(&on_call_state_impl);
-	ics_core_set_call_transfer_callback(&on_call_transfer_impl);
-	ics_core_set_call_media_state_callback(&on_call_media_state_impl);
+	ics_set_reg_start_callback(&on_reg_start_impl);
+	ics_set_reg_state_callback(&on_reg_state_impl);
+	ics_set_incoming_call_callback(&on_incoming_call_impl);
+	ics_set_call_state_callback(&on_call_state_impl);
+	ics_set_call_transfer_callback(&on_call_transfer_impl);
+	ics_set_call_media_state_callback(&on_call_media_state_impl);
 
-	ics_core_start(&app_data);
-	ics_core_connect(&app_data, 12345);
-	ics_core_add_account(&app_data, "192.168.2.50", "quy", "1234");
+	ics_start(&app_data);
+	ics_connect(&app_data, 12345);
+	ics_add_account(&app_data, "192.168.2.50", "quy", "1234");
 
 	is_running = 1;
 	while(is_running) {
@@ -56,27 +55,27 @@ int main() {
 				switch(chose) {
 					case 1:
 						strcpy(sip_add, "sip:quy2@192.168.2.50");
-						ics_core_make_call(&app_data, sip_add);
+						ics_make_call(&app_data, sip_add);
 						break;
 					case 2:
 						strcpy(sip_add, "sip:quy3@192.168.2.50");
-						ics_core_make_call(&app_data, sip_add);
+						ics_make_call(&app_data, sip_add);
 						break;	
 					case 3:
 						strcpy(sip_add, "sip:quy10@192.168.2.50");
-						ics_core_make_call(&app_data, sip_add);
+						ics_make_call(&app_data, sip_add);
 						break;
 					case 4:
 						strcpy(sip_add, "sip:ntt@192.168.2.50");
-						ics_core_make_call(&app_data, sip_add);
+						ics_make_call(&app_data, sip_add);
 						break;
 					case 5:
 						strcpy(sip_add, "sip:ntt1@192.168.2.50");
-						ics_core_make_call(&app_data, sip_add);
+						ics_make_call(&app_data, sip_add);
 						break;
 					case 6:
 						strcpy(sip_add, "sip:1@192.168.2.50");
-						ics_core_make_call(&app_data, sip_add);
+						ics_make_call(&app_data, sip_add);
 						break;
 
 					default:
@@ -85,45 +84,45 @@ int main() {
 				}
 				break;
 			case 'a':
-				ics_core_answer_call(&app_data);
+				ics_answer_call(&app_data);
 				break;
 			case 'h':
 				if (option[1] == 'a')
-					ics_core_hangup_call(&app_data, -2);
+					ics_hangup_call(&app_data, -2);
 				else
-					ics_core_hangup_call(&app_data, 0);
+					ics_hangup_call(&app_data, 0);
 				break;
 			case 'H':
-				ics_core_hold_call(&app_data);
+				ics_hold_call(&app_data);
 				break;
 			case 'R':
-				ics_core_release_hold(&app_data);
+				ics_release_hold(&app_data);
 				break;
 			case 't':
 				if (option[1] == 'x') {
-					ics_core_adjust_audio_volume(&app_data, "t", atof(&option[3])); // Adjust mic level (Transmitter)
+					ics_adjust_audio_volume(&app_data, "t", atof(&option[3])); // Adjust mic level (Transmitter)
 				}
 				else
-					ics_core_transfer_call(&app_data, 1, 2);
+					ics_transfer_call(&app_data, 1, 2);
 				break;
 			case 'c':
-				ics_core_conference_call(&app_data, 1);
+				ics_conference_call(&app_data, 1);
 				break;
 			case 'u':
-				ics_core_set_registration(&app_data, 0);
+				ics_set_registration(&app_data, 0);
 				break;
 			case 'r':
 				if (option[1] == 'x')
-					ics_core_adjust_audio_volume(&app_data, "r", atof(&option[3])); // Adjust speaker levela (Recevicer)
+					ics_adjust_audio_volume(&app_data, "r", atof(&option[3])); // Adjust speaker levela (Recevicer)
 				else
-					ics_core_set_registration(&app_data, 1);
+					ics_set_registration(&app_data, 1);
 				break;
 			case 'q':
-				ics_core_clean(&app_data);
+				ics_clean(&app_data);
 				is_running = 0;
 				break;
 			case 'l':
-				ics_core_list_call(&app_data);
+				ics_list_call(&app_data);
 				break;
 			case 'p':
 				print_menu();

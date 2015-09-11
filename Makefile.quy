@@ -1,7 +1,7 @@
 .PHONY: all clean test
 APP:=sample
 SRC_DIR:=.
-SRCS:=ics-core.c ics-event.c
+SRCS:=ics.c ics-event.c
 TESTS:=sample.c
 
 Q_DIR:=../concurrent_queue
