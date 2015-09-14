@@ -6,6 +6,8 @@
 #include "ics-command.h"
 #include "object-pool.h"
 
+#include <pjsua-lib/pjsua.h>
+
 typedef struct _app_data {
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;

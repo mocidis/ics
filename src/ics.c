@@ -4,7 +4,6 @@
 */
 
 /*! INLUCDE FILES */
-#include <pjsua-lib/pjsua.h>
 #include <stdio.h>
 #include "ics.h"
 #include "ics-common.h"
@@ -551,7 +550,8 @@ void ics_init(ics_t *data) {
 
 	//! Chon sound device
 	dev_count = pjmedia_aud_dev_count();
-	pjsua_set_snd_dev(0, 2);
+	/*pjsua_set_snd_dev(0, 2);*/
+    pjsua_set_null_snd_dev();
 }
 
 //Put command into queue
