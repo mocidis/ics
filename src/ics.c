@@ -195,6 +195,8 @@ static void _ics_add_account(ics_t *data,char *s_ip, char *username, char*passwo
 
 	data->acfg.user_data = (void *)data;
 
+    data->acfg.reg_timeout = 5;
+
 	status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
 	ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
 }
