@@ -33,7 +33,7 @@ int main() {
 
 	ics_start(&app_data);
 	ics_connect(&app_data, 12345);
-	ics_add_account(&app_data, "192.168.2.50", "quy", "1234");
+	ics_add_account(&app_data, "10.248.11.221", "OPdefaults", "redflex");
 
 	is_running = 1;
 	while(is_running) {
@@ -49,6 +49,7 @@ int main() {
 				printf("4.ntt@192.168.2.50\n");
 				printf("5.ntt1@191.168.2.50\n");
 				printf("6. 1\n");
+                printf("7.852@101.248.11.221");
 				if (scanf("%d",&chose) != 1){
 					printf("Invalid input value\n");
 				}
@@ -74,21 +75,24 @@ int main() {
 						ics_make_call(&app_data, sip_add);
 						break;
 					case 6:
-						strcpy(sip_add, "sip:1@192.168.2.50");
+						strcpy(sip_add, "sip:852901252465677@10.248.11.221");
 						ics_make_call(&app_data, sip_add);
 						break;
-
-					default:
-						printf("Press 'm' to make another call\n");
-						break;
-				}
-				break;
-			case 'a':
-				ics_answer_call(&app_data);
-				break;
-			case 'h':
-				if (option[1] == 'a')
-					ics_hangup_call(&app_data, -2);
+                    case 7:
+                        strcpy(sip_add, "sip:@192.168.2.50");
+                        ics_make_call(&app_data, sip_add);
+                        break;
+                    default:
+                        printf("Press 'm' to make another call\n");
+                        break;
+                }
+                break;
+            case 'a':
+                ics_answer_call(&app_data);
+                break;
+            case 'h':
+                if (option[1] == 'a')
+                    ics_hangup_call(&app_data, -2);
 				else
 					ics_hangup_call(&app_data, 0);
 				break;
