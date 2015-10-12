@@ -518,14 +518,31 @@ static void on_call_transfer_status (pjsua_call_id call_id, int st_code, const p
  * \brief Khoi tao cac thanh phan can thiet cho chuong trinh
  * \param agr1: ics_t *data
  */
-void ics_init(ics_t *data) {
-    int dev_count;
 
+void ics_pool_init(ics_t *data) {
     //! CREATE
     pj_status_t status;
 
     //! Khoi tao pj lib
     status = pj_init();
+    //! Khoi tao pj caching pool va tao poll
+    pj_caching_pool_init(&data->cp, NULL, 1024);
+    data->pool = pj_pool_create(&data->cp.factory, "pool", 64, 64, NULL);
+}
+void ics_init(ics_t *data) {
+
+    //! Khoi tao queue va opool
+    int queue_capacity = 100;
+
+    queue_init(&data->queue, queue_capacity, 10 /* NOT USED */, data->pool);
+
+    opool_init(&data->opool, queue_capacity, sizeof(ics_event_t), data->pool );
+}
+
+void ics_pjsua_init(ics_t *data) {
+    int dev_count;
+
+    pj_status_t status;
     //! Goi pjsua
     status = pjsua_create();
     ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot create pjsua");
@@ -544,26 +561,15 @@ void ics_init(ics_t *data) {
     data->log_cfg.console_level = 2;
 
     //! INIT
-    int queue_capacity = 100;
     //! Khoi tao pjsua
     status = pjsua_init(&data->cfg, &data->log_cfg, NULL);
     ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot initializing pjsua");
-
-    //! Khoi tao pj caching pool va tao poll
-    pj_caching_pool_init(&data->cp, NULL, 1024);
-    data->pool = pj_pool_create(&data->cp.factory, "pool", 64, 64, NULL);
-
-    //! Khoi tao queue va opool
-    queue_init(&data->queue, queue_capacity, 10 /* NOT USED */, data->pool);
-
-    opool_init(&data->opool, queue_capacity, sizeof(ics_event_t), data->pool );
 
     //! Chon sound device
     dev_count = pjmedia_aud_dev_count();
     /*pjsua_set_snd_dev(0, 2);*/
     pjsua_set_null_snd_dev();
 }
-
 //Put command into queue
 /**
  * \fn ics_...()

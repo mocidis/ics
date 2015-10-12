@@ -19,7 +19,9 @@ int main() {
 	int chose;
 	char sip_add[50];
 	//
-	
+
+    ics_pool_init(&app_data);
+    ics_pjsua_init(&app_data);
 	ics_init(&app_data);
 
 	ics_set_default_callback(&on_reg_start_default);
@@ -30,12 +32,12 @@ int main() {
 	ics_set_call_state_callback(&on_call_state_impl);
 	ics_set_call_transfer_callback(&on_call_transfer_impl);
 	ics_set_call_media_state_callback(&on_call_media_state_impl);
-
 	ics_start(&app_data);
 	ics_connect(&app_data, 12345);
-	ics_add_account(&app_data, "10.248.11.221", "OPdefaults", "redflex");
+	ics_add_account(&app_data, "192.168.2.50", "quy10", "1234");
 
 	is_running = 1;
+    
 	while(is_running) {
 		if (fgets(option, sizeof(option), stdin) == NULL ) {
 			puts("NULL command\n");

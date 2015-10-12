@@ -25,7 +25,10 @@ typedef struct _app_data {
 
 }ics_t;
 
+void ics_pool_init(ics_t *data);
+void ics_pjsua_init(ics_t *data);
 void ics_init(ics_t *data);
+
 void ics_connect(ics_t *data, int port);
 void ics_add_account(ics_t *data, char *s_ip, char *username, char *password);
 void ics_start(ics_t *data);
@@ -41,7 +44,7 @@ void ics_conference_call(ics_t *data, int call_id);
 void ics_list_call(ics_t *data);
 void ics_clean(ics_t *data);
 
-void ics_set_default_callback();
+void ics_set_default_callback(void (*func)());
 void on_reg_start_default(void);
 void ics_set_reg_start_callback(void (*func)(int accid));
 void ics_set_reg_state_callback(void (*func)(int account_id, char* is_registration, int code, char *reason));
