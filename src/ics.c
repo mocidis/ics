@@ -566,9 +566,9 @@ void ics_pjsua_init(ics_t *data) {
     ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot initializing pjsua");
 
     //! Chon sound device
-    //dev_count = pjmedia_aud_dev_count();
-    pjsua_set_snd_dev(0, 2);
-    //pjsua_set_null_snd_dev();
+    dev_count = pjmedia_aud_dev_count();
+    //pjsua_set_snd_dev(0, 2);
+    pjsua_set_null_snd_dev();
 }
 //Put command into queue
 /**
