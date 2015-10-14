@@ -49,7 +49,7 @@ void on_reg_start_default(void);
 void ics_set_reg_start_callback(void (*func)(int accid));
 void ics_set_reg_state_callback(void (*func)(int account_id, char* is_registration, int code, char *reason));
 void ics_set_incoming_call_callback(void (*func)(int account_id, int call_id, char *remote_contact, char *local_contact));
-void ics_set_call_state_callback(void (*func)(int call_id, char *st_text));
+void ics_set_call_state_callback(void (*func)(int call_id,int st_code, char *st_text));
 void ics_set_call_transfer_callback(void (*func)(int call_id, int st_code, char *st_text));
 void ics_set_call_media_state_callback(void (*func)(int call_id, int st_code));
 

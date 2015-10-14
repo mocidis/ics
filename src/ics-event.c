@@ -48,11 +48,12 @@ void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, 
 	//event->incoming_call_event.remote_contact[remote_len] = '\0';
 	//event->incoming_call_event.local_contact[local_len] = '\0';
 }
-void build_call_state_event(ics_event_t *event, int call_id, char *state) {
+void build_call_state_event(ics_event_t *event, int call_id, int state_code, char *state) {
 	int state_len = sizeof(event->call_state_event.state);
 	
 	event->call_state_event.eventid = ICS_CALL_STATE;
 	event->call_state_event.call_id = call_id;
+    event->call_state_event.state_code = state_code;
 
 	ICS_EXIT_IF_TRUE(sizeof(state) < 0 , "invalid value reason_len");
 	ICS_EXIT_IF_TRUE(sizeof(state) > state_len, "Overflow in ics_call_state_event.state");

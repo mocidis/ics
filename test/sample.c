@@ -6,7 +6,7 @@ void print_menu();
 void on_reg_start_impl(int account_id);
 void on_reg_state_impl(int account_id, char* is_registration, int code, char *reason);
 void on_incoming_call_impl(int account_id, int call_id, char *remote_contact, char *local_contact);
-void on_call_state_impl(int call_id, char *st_text);
+void on_call_state_impl(int call_id, int st_code, char *st_text);
 void on_call_transfer_impl(int call_id, int st_code, char *st_text);
 void on_call_media_state_impl(int call_id, int st_code);
 
@@ -176,8 +176,8 @@ void on_incoming_call_impl(int account_id, int call_id, char *remote_contact, ch
 	printf("To: %s\n", local_contact);
 }
 
-void on_call_state_impl(int call_id, char *st_text) {
-	printf("Call %d state= %s\n", call_id, st_text);
+void on_call_state_impl(int call_id, int st_code,  char *st_text) {
+	printf("Call %d state= %s(%d)\n", call_id, st_text, st_code);
 }
 
 void on_call_transfer_impl(int call_id, int st_code, char *st_text) {

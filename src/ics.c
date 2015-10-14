@@ -17,7 +17,7 @@ pjsua_call_id current_call = PJSUA_INVALID_ID;
 void (*on_reg_start_p)(int account_id);
 void (*on_reg_state_p)(int account_id, char *is_registration,int code, char *reason);
 void (*on_incoming_call_p)(int account_id, int call_id, char *remote_contact, char *local_contact);
-void (*on_call_state_p)(int call_id, char *st_text);
+void (*on_call_state_p)(int call_id,int st_code, char *st_text);
 void (*on_call_transfer_p)(int call_id, int st_code, char *st_text);
 void (*on_call_media_state_p)(int call_id, int st_code);
 
@@ -43,7 +43,7 @@ void ics_set_incoming_call_callback(void (*func)(int account_id, int call_id, ch
     on_incoming_call_p = func;
 }
 
-void ics_set_call_state_callback(void (*func)(int call_id, char *st_text)) {
+void ics_set_call_state_callback(void (*func)(int call_id,int st_code, char *st_text)) {
     on_call_state_p = func;
 }
 
@@ -81,7 +81,7 @@ void process_event(ics_event_t *event) {
                     event->incoming_call_event.local_contact);
             break;
         case ICS_CALL_STATE:
-            on_call_state_p(event->call_state_event.call_id, event->call_state_event.state);
+            on_call_state_p(event->call_state_event.call_id, event->call_state_event.state_code, event->call_state_event.state);
             break;
         case ICS_TRANSFER:
             on_call_transfer_p(event->transfer_event.call_id,
@@ -457,7 +457,7 @@ static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 
     data = (ics_t *)pjsua_acc_get_user_data(ci.acc_id);
     opool_item_t *p_item = opool_get(&data->opool);
-    build_call_state_event((ics_event_t *)p_item->data, call_id, ci.state_text.ptr);	
+    build_call_state_event((ics_event_t *)p_item->data, call_id,ci.state, ci.state_text.ptr);	
     ics_event_t *event = (ics_event_t *)p_item->data;
 
     process_event(event);
@@ -527,7 +527,7 @@ void ics_pool_init(ics_t *data) {
     status = pj_init();
     //! Khoi tao pj caching pool va tao poll
     pj_caching_pool_init(&data->cp, NULL, 1024);
-    data->pool = pj_pool_create(&data->cp.factory, "pool", 64, 64, NULL);
+    data->pool = pj_pool_create(&data->cp.factory, "pool", 6400, 6400, NULL);
 }
 void ics_init(ics_t *data) {
 
@@ -566,9 +566,9 @@ void ics_pjsua_init(ics_t *data) {
     ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot initializing pjsua");
 
     //! Chon sound device
-    dev_count = pjmedia_aud_dev_count();
-    /*pjsua_set_snd_dev(0, 2);*/
-    pjsua_set_null_snd_dev();
+    //dev_count = pjmedia_aud_dev_count();
+    pjsua_set_snd_dev(0, 2);
+    //pjsua_set_null_snd_dev();
 }
 //Put command into queue
 /**
