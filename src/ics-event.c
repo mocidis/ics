@@ -32,13 +32,14 @@ void build_reg_state_event(ics_event_t *event, int account_id, int is_registrati
 
 	//event->reg_state_event.reason[reason_len] = '\0';
 }
-void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, char *remote_contact, char *local_contact) {
+void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, int st_code, char *remote_contact, char *local_contact) {
 	int local_len = sizeof(event->incoming_call_event.local_contact);
 	int remote_len = sizeof(event->incoming_call_event.remote_contact);
 
 	event->incoming_call_event.eventid = ICS_INCOMING_CALL;
 	event->incoming_call_event.account_id = account_id;
 	event->incoming_call_event.call_id = call_id;
+    event->incoming_call_event.st_code = st_code;
 
 	ICS_EXIT_IF_TRUE((sizeof(remote_contact) < 0 || sizeof(local_contact) < 0), "invalid value reason_len");
 	ICS_EXIT_IF_TRUE(sizeof(local_contact) > local_len, "Overflow in ics_incoming_call_event.local_contact");

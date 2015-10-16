@@ -5,7 +5,7 @@ void print_menu();
 
 void on_reg_start_impl(int account_id);
 void on_reg_state_impl(int account_id, char* is_registration, int code, char *reason);
-void on_incoming_call_impl(int account_id, int call_id, char *remote_contact, char *local_contact);
+void on_incoming_call_impl(int account_id, int call_id, int st_code, char *remote_contact, char *local_contact);
 void on_call_state_impl(int call_id, int st_code, char *st_text);
 void on_call_transfer_impl(int call_id, int st_code, char *st_text);
 void on_call_media_state_impl(int call_id, int st_code);
@@ -33,8 +33,8 @@ int main() {
 	ics_set_call_transfer_callback(&on_call_transfer_impl);
 	ics_set_call_media_state_callback(&on_call_media_state_impl);
 	ics_start(&app_data);
-	ics_connect(&app_data, 12345);
-	ics_add_account(&app_data, "192.168.2.50", "quy10", "1234");
+	ics_connect(&app_data, 1235);
+	ics_add_account(&app_data, "192.168.2.50", "quy3", "1234");
 
 	is_running = 1;
     
@@ -169,11 +169,12 @@ void on_reg_state_impl(int account_id, char* is_registration, int code, char *re
 	printf("Status: %d(%s)\n", code, reason);
 }
 
-void on_incoming_call_impl(int account_id, int call_id, char *remote_contact, char *local_contact) {
+void on_incoming_call_impl(int account_id, int call_id, int st_code, char *remote_contact, char *local_contact) {
 	printf("Acc id: %d\n", account_id);
 	printf("Call id: %d\n", call_id);
 	printf("From: %s\n", remote_contact);	
 	printf("To: %s\n", local_contact);
+    printf("Call state: %d\n", st_code);
 }
 
 void on_call_state_impl(int call_id, int st_code,  char *st_text) {

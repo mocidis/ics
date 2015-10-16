@@ -16,7 +16,7 @@ pjsua_call_id current_call = PJSUA_INVALID_ID;
  ************************************************** **********/
 void (*on_reg_start_p)(int account_id);
 void (*on_reg_state_p)(int account_id, char *is_registration,int code, char *reason);
-void (*on_incoming_call_p)(int account_id, int call_id, char *remote_contact, char *local_contact);
+void (*on_incoming_call_p)(int account_id, int call_id, int st_code, char *remote_contact, char *local_contact);
 void (*on_call_state_p)(int call_id,int st_code, char *st_text);
 void (*on_call_transfer_p)(int call_id, int st_code, char *st_text);
 void (*on_call_media_state_p)(int call_id, int st_code);
@@ -39,7 +39,7 @@ void ics_set_reg_state_callback(void (*func)(int account_id, char* is_registrati
     on_reg_state_p = func;
 }
 
-void ics_set_incoming_call_callback(void (*func)(int account_id, int call_id, char *remote_contact, char *local_contact)) {
+void ics_set_incoming_call_callback(void (*func)(int account_id, int call_id, int st_code, char *remote_contact, char *local_contact)) {
     on_incoming_call_p = func;
 }
 
@@ -77,6 +77,7 @@ void process_event(ics_event_t *event) {
             break;
         case ICS_INCOMING_CALL:
             on_incoming_call_p(event->incoming_call_event.account_id, event->incoming_call_event.call_id,
+                    event->incoming_call_event.st_code,
                     event->incoming_call_event.remote_contact,
                     event->incoming_call_event.local_contact);
             break;
@@ -425,7 +426,7 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_r
     //_ics_hold_call(data);
 
     opool_item_t *p_item = opool_get(&data->opool);
-    build_incoming_call_event((ics_event_t *)p_item->data, acc_id,call_id, ci.remote_info.ptr, ci.local_info.ptr);	
+    build_incoming_call_event((ics_event_t *)p_item->data, acc_id,call_id, ci.state, ci.remote_info.ptr, ci.local_info.ptr);	
     ics_event_t *event = (ics_event_t *)p_item->data;
 
     //queue_enqueue(&data->queue, (void *)p_item);
