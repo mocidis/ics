@@ -16,6 +16,7 @@ typedef struct _app_data {
 
 	int f_quit;
 	int f_start;
+    int f_account_added;
 	
 	pj_caching_pool cp;
 	queue_t queue;
