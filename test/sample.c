@@ -104,12 +104,11 @@ int main() {
 			case 'R':
 				ics_release_hold(&app_data);
 				break;
-			case 't':
-				if (option[1] == 'x') {
-					ics_adjust_audio_volume(&app_data, "t", atof(&option[3])); // Adjust mic level (Transmitter)
-				}
-				else
-					ics_transfer_call(&app_data, 1, 2);
+            case 't':
+                ics_transfer_call(&app_data, 1, 2);
+                break;
+            case 'v':
+                ics_adjust_audio_volume(&app_data, atoi(&option[1]), atof(&option[3])); // Adjust mic level (Transmitter)
 				break;
 			case 'c':
 				ics_conference_call(&app_data, 1);
@@ -118,9 +117,6 @@ int main() {
 				ics_set_registration(&app_data, 0);
 				break;
 			case 'r':
-				if (option[1] == 'x')
-					ics_adjust_audio_volume(&app_data, "r", atof(&option[3])); // Adjust speaker levela (Recevicer)
-				else
 					ics_set_registration(&app_data, 1);
 				break;
 			case 'q':

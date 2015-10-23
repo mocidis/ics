@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "ics.h"
 #include "ics-common.h"
+#include "ansi-utils.h"
 
 /*! GLOBAL VARIABLES */
 pjsua_call_id current_call = PJSUA_INVALID_ID;
@@ -63,7 +64,7 @@ void ics_set_call_media_state_callback(void (*func)(int call_id, int st_code)) {
 void process_event(ics_event_t *event) {
     ICS_EXIT_IF_TRUE(event->event.eventid >= ICS_EVENT_END, "Unknown event id\n");
 
-    printf("Event type: %s\n", ICS_EVENT_NAME[event->event.eventid]);
+    SHOW_LOG(3, fprintf(stdout,"Event type: %s\n", ICS_EVENT_NAME[event->event.eventid]));
 
     switch(event->event.eventid){
         case ICS_REG_START:
@@ -93,7 +94,7 @@ void process_event(ics_event_t *event) {
             on_call_media_state_p(event->call_media_state_event.call_id, event->call_media_state_event.st_code);
             break;
         default:
-            printf("Invalid event id %d\n", event->event.eventid);
+            SHOW_LOG(3, fprintf(stdout,"Invalid event id %d\n", event->event.eventid));
             break;
     }
 }
@@ -130,16 +131,16 @@ void _ics_list_call(ics_t *data) {
 
     PJ_UNUSED_ARG(data);
     max = pjsua_call_get_count();
-    printf("Your call list:\n");
+    SHOW_LOG(3, fprintf(stdout,"Your call list:\n"));
     for (i = 0; i < max; i++){	
         if (pjsua_call_is_active(i)) {
             pjsua_call_get_info(i, &ci);
-            printf("Call id : %d to %.*s [%.*s]\n", ci.id,
+            SHOW_LOG(3, fprintf(stdout,"Call id : %d to %.*s [%.*s]\n", ci.id,
                     (int)ci.remote_info.slen, ci.remote_info.ptr,
-                    (int)ci.state_text.slen, ci.state_text.ptr);
+                    (int)ci.state_text.slen, ci.state_text.ptr));
         }
     }
-    printf("Your current call id : %d\n", current_call);
+    SHOW_LOG(3, fprintf(stdout,"Your current call id : %d\n", current_call));
 }
 
 
@@ -151,12 +152,13 @@ void _ics_list_call(ics_t *data) {
  */
 static void _ics_connect(ics_t *data, int port) {
     PJ_UNUSED_ARG(data);
+    PJ_UNUSED_ARG(port);
 
     pj_status_t status;
     pjsua_transport_config cfg;
 
     pjsua_transport_config_default(&cfg);
-    cfg.port = port;
+    cfg.port = 0;
     status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
     ICS_EXIT_IF_TRUE(status != PJ_SUCCESS, "Cannot create connect");
 
@@ -226,7 +228,7 @@ static void _ics_answer_call(ics_t *data) {
     PJ_UNUSED_ARG(data);
 
     if (current_call == PJSUA_INVALID_ID)
-        printf("No current call\n");
+        SHOW_LOG(3, fprintf(stdout,"No current call\n"));
     else {
         pjsua_call_answer(current_call, 200, NULL, NULL);
     }
@@ -242,7 +244,7 @@ static void _ics_hangup_call(ics_t *data, int renew) {
     PJ_UNUSED_ARG(data);
 
     if (current_call == PJSUA_INVALID_ID)
-        printf("No current call\n");
+        SHOW_LOG(3, fprintf(stdout,"No current call\n"));
     else {
         if (renew == -2) 
             pjsua_call_hangup_all();
@@ -262,7 +264,7 @@ static void _ics_hold_call(ics_t *data) {
     PJ_UNUSED_ARG(data);
 
     if (current_call < 0)
-        printf("No current call\n");
+        SHOW_LOG(3, fprintf(stdout,"No current call\n"));
     else {
         pjsua_call_set_hold(current_call, NULL);
     }
@@ -278,7 +280,7 @@ static void _ics_release_hold(ics_t *data) {
     PJ_UNUSED_ARG(data);
 
     if (current_call < 0)
-        printf("No current call\n");
+        SHOW_LOG(3, fprintf(stdout,"No current call\n"));
     else {
         pjsua_call_reinvite(current_call, PJ_TRUE, NULL);
     }
@@ -296,7 +298,7 @@ static void _ics_set_registration(ics_t *data, int renew) {
     if (renew == 1 || renew == 0)
         pjsua_acc_set_registration(data->acc_id, renew);
     else
-        printf("Invalid input");
+        SHOW_LOG(3, fprintf(stdout,"Invalid input"));
 }
 
 /**
@@ -316,7 +318,7 @@ static void _ics_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
         pjsua_call_xfer_replaces(call_id_1, call_id_2, 0, NULL);
     }
     else
-        printf("Cannot transfer call!\n");
+        SHOW_LOG(3, fprintf(stdout,"Cannot transfer call!\n"));
 #endif
 
     //For test only:
@@ -325,7 +327,7 @@ static void _ics_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
     pjsua_call_info ci;
 
     max = pjsua_call_get_count();
-    printf("You have %d active call%s\n", max, (max>1?"s":""));
+    SHOW_LOG(3, fprintf(stdout,"You have %d active call%s\n", max, (max>1?"s":"")));
 
     for (i = 0; i < max; i++){	
         if (pjsua_call_is_active(i)) {
@@ -342,7 +344,7 @@ static void _ics_conference_call(ics_t *data, int call_id) {
     PJ_UNUSED_ARG(data);
 
     max = pjsua_call_get_count();
-    printf("Let's conference call!\n");
+    SHOW_LOG(3, fprintf(stdout,"Let's conference call!\n"));
     pjsua_call_info ci;
 
 #if 1
@@ -356,7 +358,7 @@ static void _ics_conference_call(ics_t *data, int call_id) {
         }
     }
     else
-        printf("Cannot transfer call!\n");
+        SHOW_LOG(3, fprintf(stdout,"Cannot transfer call!\n"));
 #endif
 
     //For test only:
@@ -383,17 +385,17 @@ static void _ics_conference_call(ics_t *data, int call_id) {
  * agr2: char *device
  * agr3: level
  */
-static void _ics_adjust_audio_volume(ics_t *data, char *device, float level) {
+static void _ics_adjust_audio_volume(ics_t *data, int device, float level) {
     PJ_UNUSED_ARG(data);
 
-    if (strcmp(device,"r") == 0) {
+    if (device == 0) {
         pjsua_conf_adjust_rx_level(0, level);
     }
-    else if (strcmp(device,"t") == 0) {
+    else if (device == 1) {
         pjsua_conf_adjust_tx_level(0, level);
     }
     else
-        printf("Invalid input to adjust device");
+        SHOW_LOG(3, fprintf(stdout,"Invalid input to adjust device"));
 }
 
 void ics_clean(ics_t *data) {
@@ -588,6 +590,7 @@ void ics_pjsua_init(ics_t *data) {
 
     pjsua_logging_config_default(&data->log_cfg);
     data->log_cfg.console_level = 2;
+    SET_LOG_LEVEL(5);    
 
     //! INIT
     //! Khoi tao pjsua
@@ -673,7 +676,7 @@ void ics_set_registration(ics_t *data, int renew) {
     queue_enqueue(&data->queue, (void *)p_item);
 }
 
-void ics_adjust_audio_volume(ics_t *data, char *device, float level) {
+void ics_adjust_audio_volume(ics_t *data, int device, float level) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
@@ -749,7 +752,7 @@ static void *thread_proc(void *param) {
                 _ics_list_call(data);
                 break;
             default:
-                printf("Invalid command id %d\n", cmd->cmd.cmd_id);
+                SHOW_LOG(3, fprintf(stdout,"Invalid command id %d\n", cmd->cmd.cmd_id));
                 break;
         }
         // Event processing done

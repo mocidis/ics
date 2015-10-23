@@ -74,14 +74,11 @@ void build_set_registration_cmd(ics_cmd_t *cmd, int renew) {
 	cmd->init_cmd.cmd_id = CMD_SET_REGISTER;
 	cmd->set_registration_cmd.renew = renew;
 }
-void build_adjust_audio_cmd(ics_cmd_t *cmd, char *device, float level) {
+void build_adjust_audio_cmd(ics_cmd_t *cmd, int device, float level) {
 	int device_len = sizeof(cmd->adjust_audio_cmd.device);
 
 	cmd->adjust_audio_cmd.cmd_id = CMD_ADJUST_AUDIO;
-	
-	ICS_EXIT_IF_TRUE(sizeof(device[0]) < 0, "Invalid value device\n");
-	ICS_EXIT_IF_TRUE(sizeof(device[0]) > device_len, "Overflow in adjust_audio_cmd.device\n");
-	strncpy(cmd->adjust_audio_cmd.device, device, device_len);
+	cmd->adjust_audio_cmd.device = device;
 	cmd->adjust_audio_cmd.level = level;
 }
 
