@@ -128,6 +128,7 @@ void _ics_list_call(ics_t *data) {
     int i, max;
     pjsua_call_info ci;
 
+    PJ_UNUSED_ARG(data);
     max = pjsua_call_get_count();
     printf("Your call list:\n");
     for (i = 0; i < max; i++){	
@@ -149,6 +150,8 @@ void _ics_list_call(ics_t *data) {
  * agr2: int port
  */
 static void _ics_connect(ics_t *data, int port) {
+    PJ_UNUSED_ARG(data);
+
     pj_status_t status;
     pjsua_transport_config cfg;
 
@@ -220,6 +223,8 @@ static void _ics_make_call(ics_t *data, char * sip_addr) {
  * \param agr1: ics_t *data
  */
 static void _ics_answer_call(ics_t *data) {
+    PJ_UNUSED_ARG(data);
+
     if (current_call == PJSUA_INVALID_ID)
         printf("No current call\n");
     else {
@@ -234,6 +239,8 @@ static void _ics_answer_call(ics_t *data) {
  * agr2: int renew (1= hangup all, 0= hangup current call)
  */
 static void _ics_hangup_call(ics_t *data, int renew) {
+    PJ_UNUSED_ARG(data);
+
     if (current_call == PJSUA_INVALID_ID)
         printf("No current call\n");
     else {
@@ -252,6 +259,8 @@ static void _ics_hangup_call(ics_t *data, int renew) {
  * \param agr1: ics_t *data
  */
 static void _ics_hold_call(ics_t *data) {
+    PJ_UNUSED_ARG(data);
+
     if (current_call < 0)
         printf("No current call\n");
     else {
@@ -266,6 +275,8 @@ static void _ics_hold_call(ics_t *data) {
  * agr2: int port
  */
 static void _ics_release_hold(ics_t *data) {
+    PJ_UNUSED_ARG(data);
+
     if (current_call < 0)
         printf("No current call\n");
     else {
@@ -280,6 +291,8 @@ static void _ics_release_hold(ics_t *data) {
  * agr2: int renew(1= re-register, 0= un-register)
  */
 static void _ics_set_registration(ics_t *data, int renew) {
+    PJ_UNUSED_ARG(data);
+
     if (renew == 1 || renew == 0)
         pjsua_acc_set_registration(data->acc_id, renew);
     else
@@ -294,6 +307,10 @@ static void _ics_set_registration(ics_t *data, int renew) {
  * agr3: int call_id_2
  */
 static void _ics_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
+    PJ_UNUSED_ARG(data);
+    PJ_UNUSED_ARG(call_id_1);
+    PJ_UNUSED_ARG(call_id_2);
+
 #if 0
     if ( (call_id_1 != call_id_2) && pjsua_call_is_active(call_id_1) && pjsua_call_is_active(call_id_2) ) {
         pjsua_call_xfer_replaces(call_id_1, call_id_2, 0, NULL);
@@ -322,6 +339,8 @@ static void _ics_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
 
 static void _ics_conference_call(ics_t *data, int call_id) {
     int i, max;
+    PJ_UNUSED_ARG(data);
+
     max = pjsua_call_get_count();
     printf("Let's conference call!\n");
     pjsua_call_info ci;
@@ -365,6 +384,8 @@ static void _ics_conference_call(ics_t *data, int call_id) {
  * agr3: level
  */
 static void _ics_adjust_audio_volume(ics_t *data, char *device, float level) {
+    PJ_UNUSED_ARG(data);
+
     if (strcmp(device,"r") == 0) {
         pjsua_conf_adjust_rx_level(0, level);
     }
@@ -389,6 +410,7 @@ void ics_clean(ics_t *data) {
  */
 static void on_reg_started(pjsua_acc_id acc_id, pj_bool_t renew) {
     ics_t *data;
+    PJ_UNUSED_ARG(renew);
 
     data = (ics_t *)pjsua_acc_get_user_data(acc_id);
     opool_item_t *p_item = opool_get(&data->opool);
@@ -416,6 +438,8 @@ static void on_reg_state(pjsua_acc_id acc_id, pjsua_reg_info *info) {
 }
 
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id, pjsip_rx_data *rdata) {
+    PJ_UNUSED_ARG(rdata);
+
     ics_t *data;
     pjsua_call_info ci;
 
@@ -492,6 +516,9 @@ static void on_call_media_state(pjsua_call_id call_id) {
 }
 
 static void on_call_transfer_status (pjsua_call_id call_id, int st_code, const pj_str_t *st_text, pj_bool_t final, pj_bool_t *p_cont) {
+    PJ_UNUSED_ARG(final);
+    PJ_UNUSED_ARG(p_cont);
+
     ics_t *data;
     pjsua_call_info ci;
     current_call = call_id;
@@ -526,6 +553,7 @@ void ics_pool_init(ics_t *data) {
 
     //! Khoi tao pj lib
     status = pj_init();
+    EXIT_IF_TRUE(status != PJ_SUCCESS, "Error pj_init");
     //! Khoi tao pj caching pool va tao poll
     pj_caching_pool_init(&data->cp, NULL, 1024);
     data->pool = pj_pool_create(&data->cp.factory, "pool", 6400, 6400, NULL);
@@ -582,127 +610,91 @@ void ics_connect(ics_t *data, int port){
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_connect_cmd((ics_cmd_t *)p_item->data, port);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 void ics_add_account(ics_t *data, char *s_ip, char *username, char *password) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_add_acc_cmd((ics_cmd_t *)p_item->data, s_ip, username, password);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 void ics_make_call(ics_t *data, char *sip_addr) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_make_call_cmd((ics_cmd_t *)p_item->data, sip_addr);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 void ics_answer_call(ics_t *data) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_answer_call_cmd((ics_cmd_t *)p_item->data);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 void ics_hangup_call(ics_t *data, int renew) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_hangup_call_cmd((ics_cmd_t *)p_item->data, renew);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 void ics_hold_call(ics_t *data) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_hold_call_cmd((ics_cmd_t *)p_item->data);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 
 void ics_release_hold(ics_t *data) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_release_call_cmd((ics_cmd_t *)p_item->data);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 
 void ics_transfer_call(ics_t *data, int call_id_1, int call_id_2) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_transfer_call_cmd((ics_cmd_t *)p_item->data, call_id_1, call_id_2);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 
 void ics_set_registration(ics_t *data, int renew) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_set_registration_cmd((ics_cmd_t *)p_item->data, renew);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 
 void ics_adjust_audio_volume(ics_t *data, char *device, float level) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_adjust_audio_cmd((ics_cmd_t *)p_item->data, device, level);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 
 void ics_conference_call(ics_t *data, int call_id) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_conference_call_cmd((ics_cmd_t *)p_item->data, call_id);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 
 void ics_list_call(ics_t *data) {
     ICS_EXIT_IF_TRUE(data->f_start != 1, "Your must call ics_start function first\n");
     opool_item_t *p_item = opool_get(&data->opool);
 
-    ics_cmd_t *cmd = (ics_cmd_t *)p_item->data;
     build_list_call_cmd((ics_cmd_t *)p_item->data);
     queue_enqueue(&data->queue, (void *)p_item);
-
-    opool_free(&data->opool, p_item);
 }
 //Dequeue and do command
 
