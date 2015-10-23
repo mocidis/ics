@@ -197,8 +197,16 @@ static void _ics_add_account(ics_t *data,char *s_ip, char *username, char*passwo
 
     data->acfg.reg_timeout = 5;
 
-    status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
-    ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
+    if(data->f_account_added) {
+        status = pjsua_acc_modify(data->acc_id, &data->acfg);
+        ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot update account");
+        pjsua_acc_set_registration(data->acc_id, 1);
+    }
+    else {
+        status = pjsua_acc_add(&data->acfg, PJ_TRUE, &data->acc_id);
+        ICS_RETURN_IF_TRUE(status != PJ_SUCCESS, "Cannot register account");
+        data->f_account_added = 1;
+    }
 }
 
 /**
@@ -376,7 +384,7 @@ static void _ics_adjust_audio_volume(ics_t *data, char *device, float level) {
 }
 
 void ics_clean(ics_t *data) {
-    data->f_quit = 0;
+    data->f_quit = 1;
     pjsua_destroy();
     pj_pool_release(data->pool);
     pj_caching_pool_destroy(&data->cp);
@@ -713,7 +721,7 @@ void ics_list_call(ics_t *data) {
  */
 static void *thread_proc(void *param) {
     ics_t *data = (ics_t *) param;	
-    while(data->f_quit) {
+    while(!data->f_quit) {
         opool_item_t *p_item = opool_get(&data->opool);
         p_item = (opool_item_t *)queue_dequeue(&data->queue);
 
@@ -772,8 +780,9 @@ static void *thread_proc(void *param) {
  * \param agr1: ics_t *data
  */
 void ics_start(ics_t *data) {
-    data->f_quit = 1;
+    data->f_quit = 0;
     data->f_start = 1;
+    data->f_account_added = 0;
     int rc = pj_thread_create(data->pool, "ics_loop_thread", (pj_thread_proc*)&thread_proc, data, PJ_THREAD_DEFAULT_STACK_SIZE, 0, &data->thread);
     ICS_EXIT_IF_TRUE(rc != PJ_SUCCESS, "Cannot start thread for ics_start");
 }
