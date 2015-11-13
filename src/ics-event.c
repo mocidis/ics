@@ -27,7 +27,7 @@ void build_reg_state_event(ics_event_t *event, int account_id, int is_registrati
 	event->reg_state_event.code = code;
 
 	ICS_EXIT_IF_TRUE(reason_len < 0, "invalid value reason_len");
-	ICS_EXIT_IF_TRUE(reason_len > sizeof(event->reg_state_event.reason), "Overflow in ics_reg_state_event.reason");
+	ICS_EXIT_IF_TRUE(reason_len > (int)sizeof(event->reg_state_event.reason), "Overflow in ics_reg_state_event.reason");
 	strncpy(event->reg_state_event.reason, reason, reason_len);
 
 	//event->reg_state_event.reason[reason_len] = '\0';
@@ -41,9 +41,9 @@ void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, 
 	event->incoming_call_event.call_id = call_id;
     event->incoming_call_event.st_code = st_code;
 
-	ICS_EXIT_IF_TRUE((sizeof(remote_contact) < 0 || sizeof(local_contact) < 0), "invalid value reason_len");
-	ICS_EXIT_IF_TRUE(sizeof(local_contact) > local_len, "Overflow in ics_incoming_call_event.local_contact");
-	ICS_EXIT_IF_TRUE(sizeof(remote_contact) > remote_len, "Overflow in ics_incoming_call_event.remote_contact");
+	ICS_EXIT_IF_TRUE((int)(sizeof(remote_contact) < 0 || (int)sizeof(local_contact) < 0), "invalid value reason_len");
+	ICS_EXIT_IF_TRUE((int)sizeof(local_contact) > local_len, "Overflow in ics_incoming_call_event.local_contact");
+	ICS_EXIT_IF_TRUE((int)sizeof(remote_contact) > remote_len, "Overflow in ics_incoming_call_event.remote_contact");
 	strncpy(event->incoming_call_event.remote_contact, remote_contact, remote_len);
 	strncpy(event->incoming_call_event.local_contact, local_contact, local_len);
 	//event->incoming_call_event.remote_contact[remote_len] = '\0';
@@ -56,8 +56,8 @@ void build_call_state_event(ics_event_t *event, int call_id, int state_code, cha
 	event->call_state_event.call_id = call_id;
     event->call_state_event.state_code = state_code;
 
-	ICS_EXIT_IF_TRUE(sizeof(state) < 0 , "invalid value reason_len");
-	ICS_EXIT_IF_TRUE(sizeof(state) > state_len, "Overflow in ics_call_state_event.state");
+	ICS_EXIT_IF_TRUE((int)sizeof(state) < 0 , "invalid value reason_len");
+	ICS_EXIT_IF_TRUE((int)sizeof(state) > state_len, "Overflow in ics_call_state_event.state");
 	strncpy(event->call_state_event.state, state, state_len);
 }
 
@@ -68,8 +68,8 @@ void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st
 	event->transfer_event.call_id = call_id;
 	event->transfer_event.st_code = st_code;
 
-	ICS_EXIT_IF_TRUE(sizeof(st_text) < 0, "Invalid value st_text");
-	ICS_EXIT_IF_TRUE(sizeof(st_text) > len, "Overflow in ics_transfer_event.st_text");
+	ICS_EXIT_IF_TRUE((int)sizeof(st_text) < 0, "Invalid value st_text");
+	ICS_EXIT_IF_TRUE((int)sizeof(st_text) > len, "Overflow in ics_transfer_event.st_text");
 	strncpy(event->transfer_event.st_text, st_text, len);
 }
 

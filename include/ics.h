@@ -5,6 +5,7 @@
 #include "ics-event.h"
 #include "ics-command.h"
 #include "object-pool.h"
+#include "ansi-utils.h"
 
 #include <pjsua-lib/pjsua.h>
 
