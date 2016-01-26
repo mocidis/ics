@@ -47,6 +47,7 @@ typedef struct ics_call_state_event_s {
 	int call_id;
 	char state[100];
     int state_code;
+	char remote_contact[100];
 } ics_call_state_event_t;
 
 typedef struct ics_transfer_event_s {
@@ -54,12 +55,14 @@ typedef struct ics_transfer_event_s {
 	int call_id;
 	int st_code;
 	char st_text[100];
+	char remote_contact[100];
 } ics_transfer_event_t;
 
 typedef struct ics_call_media_state_event_s {
 	ICS_EVENT_COMMON_FIELDS;
 	int call_id;
 	int st_code;
+	char remote_contact[100];
 } ics_call_media_state_event_t;
 
 typedef union ics_event_s {
@@ -75,9 +78,9 @@ typedef union ics_event_s {
 void build_reg_start_event(ics_event_t *event, int account_id);
 void build_reg_state_event(ics_event_t *event, int account_id, int is_registration, int code, char *reason, int reason_len);
 void build_incoming_call_event(ics_event_t *event, int account_id,int call_id, int st_code, char *remote_contact, char *local_contact);
-void build_call_state_event(ics_event_t *event, int call_id, int state_code, char *state);
-void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text);
-void build_call_media_state_event(ics_event_t *event, int call_id, int st_code);
+void build_call_state_event(ics_event_t *event, int call_id, int state_code, char *state, char *remote_contact);
+void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text, char *remote_contact);
+void build_call_media_state_event(ics_event_t *event, int call_id, int st_code, char *remote_contact);
 
 /*
 int is_reg_start_event(ics_event_t *event);

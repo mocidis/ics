@@ -17,9 +17,9 @@ pjsua_call_id current_call = PJSUA_INVALID_ID;
 void (*on_reg_start_p)(int account_id);
 void (*on_reg_state_p)(int account_id, char *is_registration,int code, char *reason);
 void (*on_incoming_call_p)(int account_id, int call_id, int st_code, char *remote_contact, char *local_contact);
-void (*on_call_state_p)(int call_id,int st_code, char *st_text);
-void (*on_call_transfer_p)(int call_id, int st_code, char *st_text);
-void (*on_call_media_state_p)(int call_id, int st_code);
+void (*on_call_state_p)(int call_id,int st_code, char *st_text, char *remote_contact);
+void (*on_call_transfer_p)(int call_id, int st_code, char *st_text, char *remote_contact);
+void (*on_call_media_state_p)(int call_id, int st_code, char *remote_contact);
 
 void on_reg_start_default(void) {};
 
@@ -43,15 +43,15 @@ void ics_set_incoming_call_callback(void (*func)(int account_id, int call_id, in
     on_incoming_call_p = func;
 }
 
-void ics_set_call_state_callback(void (*func)(int call_id,int st_code, char *st_text)) {
+void ics_set_call_state_callback(void (*func)(int call_id,int st_code, char *st_text, char *remote_contact)) {
     on_call_state_p = func;
 }
 
-void ics_set_call_transfer_callback(void (*func)(int call_id, int st_code, char *st_text)) {
+void ics_set_call_transfer_callback(void (*func)(int call_id, int st_code, char *st_text, char *remote_contact)) {
     on_call_transfer_p = func;
 }
 
-void ics_set_call_media_state_callback(void (*func)(int call_id, int st_code)) {
+void ics_set_call_media_state_callback(void (*func)(int call_id, int st_code, char *remote_contact)) {
     on_call_media_state_p = func;
 }
 
@@ -82,15 +82,21 @@ void process_event(ics_event_t *event) {
                     event->incoming_call_event.local_contact);
             break;
         case ICS_CALL_STATE:
-            on_call_state_p(event->call_state_event.call_id, event->call_state_event.state_code, event->call_state_event.state);
+            on_call_state_p(event->call_state_event.call_id, 
+					event->call_state_event.state_code, 
+					event->call_state_event.state, 
+					event->call_state_event.remote_contact);
             break;
         case ICS_TRANSFER:
             on_call_transfer_p(event->transfer_event.call_id,
                     event->transfer_event.st_code,
-                    event->transfer_event.st_text);
+                    event->transfer_event.st_text, 
+					event->transfer_event.remote_contact);
             break;
         case ICS_CALL_MEDIA_STATE:
-            on_call_media_state_p(event->call_media_state_event.call_id, event->call_media_state_event.st_code);
+            on_call_media_state_p(event->call_media_state_event.call_id, 
+					event->call_media_state_event.st_code, 
+					event->call_media_state_event.remote_contact);
             break;
         default:
             SHOW_LOG(3, "Invalid event id %d\n", event->event.eventid);
@@ -491,7 +497,7 @@ static void on_call_state (pjsua_call_id call_id, pjsip_event *e) {
 
     data = (ics_t *)pjsua_acc_get_user_data(ci.acc_id);
     opool_item_t *p_item = opool_get(&data->opool);
-    build_call_state_event((ics_event_t *)p_item->data, call_id,ci.state, ci.state_text.ptr);	
+    build_call_state_event((ics_event_t *)p_item->data, call_id,ci.state, ci.state_text.ptr, ci.remote_info.ptr);	
     ics_event_t *event = (ics_event_t *)p_item->data;
 
     process_event(event);
@@ -514,7 +520,7 @@ static void on_call_media_state(pjsua_call_id call_id) {
     pjsua_call_get_info(call_id, &ci);
     data = (ics_t *)pjsua_acc_get_user_data(ci.acc_id);
     opool_item_t *p_item = opool_get(&data->opool);
-    build_call_media_state_event((ics_event_t *)p_item->data, call_id, ci.media_status);	
+    build_call_media_state_event((ics_event_t *)p_item->data, call_id, ci.media_status, ci.remote_info.ptr);	
     ics_event_t *event = (ics_event_t *)p_item->data;
 
     //	queue_enqueue(&data->queue, (void *)p_item);
@@ -541,7 +547,7 @@ static void on_call_transfer_status (pjsua_call_id call_id, int st_code, const p
         st_text->ptr[len] = '\0';
 
     opool_item_t *p_item = opool_get(&data->opool);
-    build_transfer_event((ics_event_t *)p_item->data,call_id, st_code, st_text->ptr);	
+    build_transfer_event((ics_event_t *)p_item->data,call_id, st_code, st_text->ptr, ci.remote_info.ptr);	
     ics_event_t *event = (ics_event_t *)p_item->data;
 
     //	queue_enqueue(&data->queue, (void *)p_item);
@@ -605,7 +611,7 @@ void ics_pjsua_init(ics_t *data) {
 
     //! Chon sound device
     dev_count = pjmedia_aud_dev_count();
-    pjsua_set_snd_dev(0, dev_count-1);
+    pjsua_set_snd_dev(0, 11);
     //pjsua_set_null_snd_dev();
 }
 //Put command into queue

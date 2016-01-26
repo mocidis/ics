@@ -34,7 +34,7 @@ int main() {
 	ics_set_call_media_state_callback(&on_call_media_state_impl);
 	ics_start(&app_data);
 	ics_connect(&app_data, 1235);
-	ics_add_account(&app_data, "192.168.2.50", "quy3", "1234");
+	ics_add_account(&app_data, "192.168.2.30", "ntt", "1234");
 
 	is_running = 1;
     
@@ -45,7 +45,7 @@ int main() {
 		switch(option[0]) {
 			case 'm':
 				printf("Chose a call:\n");
-				printf("1.quy2@192.168.2.50\n");
+				printf("1.112@192.168.2.30\n");
 				printf("2.quy3@192.168.2.50\n");
 				printf("3.quy10@192.168.2.50\n");
 				printf("4.ntt@192.168.2.50\n");
@@ -57,7 +57,7 @@ int main() {
 				}
 				switch(chose) {
 					case 1:
-						strcpy(sip_add, "sip:quy2@192.168.2.50");
+						strcpy(sip_add, "sip:112@192.168.2.30");
 						ics_make_call(&app_data, sip_add);
 						break;
 					case 2:

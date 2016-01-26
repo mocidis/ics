@@ -49,34 +49,49 @@ void build_incoming_call_event(ics_event_t *event, int account_id, int call_id, 
 	//event->incoming_call_event.remote_contact[remote_len] = '\0';
 	//event->incoming_call_event.local_contact[local_len] = '\0';
 }
-void build_call_state_event(ics_event_t *event, int call_id, int state_code, char *state) {
+void build_call_state_event(ics_event_t *event, int call_id, int state_code, char *state, char *remote_contact) {
 	int state_len = sizeof(event->call_state_event.state);
+	int remote_len = sizeof(event->call_state_event.remote_contact);
 	
 	event->call_state_event.eventid = ICS_CALL_STATE;
 	event->call_state_event.call_id = call_id;
     event->call_state_event.state_code = state_code;
 
+	ICS_EXIT_IF_TRUE((int)(sizeof(remote_contact) < 0), "invalid value reason_len");
+	ICS_EXIT_IF_TRUE((int)sizeof(remote_contact) > remote_len, "Overflow in ics_incoming_call_event.remote_contact");
 	ICS_EXIT_IF_TRUE((int)sizeof(state) < 0 , "invalid value reason_len");
 	ICS_EXIT_IF_TRUE((int)sizeof(state) > state_len, "Overflow in ics_call_state_event.state");
 	strncpy(event->call_state_event.state, state, state_len);
+	strncpy(event->call_state_event.remote_contact, remote_contact, remote_len);
 }
 
-void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text) {
+void build_transfer_event(ics_event_t *event, int call_id, int st_code, char *st_text, char *remote_contact) {
 	int len = sizeof(event->transfer_event.st_text);
+	int remote_len = sizeof(event->transfer_event.remote_contact);
 
 	event->transfer_event.eventid = ICS_TRANSFER;
 	event->transfer_event.call_id = call_id;
 	event->transfer_event.st_code = st_code;
 
+	ICS_EXIT_IF_TRUE((int)(sizeof(remote_contact) < 0), "invalid value reason_len");
+	ICS_EXIT_IF_TRUE((int)sizeof(remote_contact) > remote_len, "Overflow in ics_incoming_call_event.remote_contact");
+
 	ICS_EXIT_IF_TRUE((int)sizeof(st_text) < 0, "Invalid value st_text");
 	ICS_EXIT_IF_TRUE((int)sizeof(st_text) > len, "Overflow in ics_transfer_event.st_text");
 	strncpy(event->transfer_event.st_text, st_text, len);
+	strncpy(event->transfer_event.remote_contact, remote_contact, remote_len);
 }
 
-void build_call_media_state_event(ics_event_t *event, int call_id, int st_code) {
+void build_call_media_state_event(ics_event_t *event, int call_id, int st_code, char *remote_contact) {
+	int remote_len = sizeof(event->call_media_state_event.remote_contact);
+
 	event->call_media_state_event.eventid = ICS_CALL_MEDIA_STATE;
 	event->call_media_state_event.call_id = call_id;
 	event->call_media_state_event.st_code = st_code;
+
+	ICS_EXIT_IF_TRUE((int)(sizeof(remote_contact) < 0), "invalid value reason_len");
+	ICS_EXIT_IF_TRUE((int)sizeof(remote_contact) > remote_len, "Overflow in ics_incoming_call_event.remote_contact");
+	strncpy(event->call_media_state_event.remote_contact, remote_contact, remote_len);
 }
 
 /*
